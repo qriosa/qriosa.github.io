@@ -1,7 +1,261 @@
-extends includes/layout.pug
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Ron's Blog - 淡泊明志, 宁静致远</title><meta name="keywords" content="CTF, OI, Algorithm, coder"><meta name="author" content="Ron"><meta name="copyright" content="Ron"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta http-equiv="Cache-Control" content="no-transform"><meta http-equiv="Cache-Control" content="no-siteapp"><meta name="description" content="old but lowlevel OIer and a young CTFer">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Ron&#39;s Blog">
+<meta property="og:url" content="https://lucxer.tk/index.html">
+<meta property="og:site_name" content="Ron&#39;s Blog">
+<meta property="og:description" content="old but lowlevel OIer and a young CTFer">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://lucxer.tk/null">
+<meta property="article:author" content="Ron">
+<meta property="article:tag" content="CTF, OI, Algorithm, coder">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://lucxer.tk/null"><link rel="shortcut icon" href="/img/favicon.png"><link rel="canonical" href="https://lucxer.tk/"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" media="print" onload="this.media='all'"><script>var GLOBAL_CONFIG = { 
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: undefined,
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  date_suffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: undefined,
+  source: {
+    jQuery: 'https://cdn.jsdelivr.net/npm/jquery@latest/dist/jquery.min.js',
+    justifiedGallery: {
+      js: 'https://cdn.jsdelivr.net/npm/justifiedGallery/dist/js/jquery.justifiedGallery.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/justifiedGallery/dist/css/justifiedGallery.min.css'
+    },
+    fancybox: {
+      js: 'https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@latest/dist/jquery.fancybox.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@latest/dist/jquery.fancybox.min.css'
+    }
+  },
+  isPhotoFigcaption: false,
+  islazyload: false,
+  isanchor: false
+};
 
-block content
-  include ./includes/mixins/post-ui.pug
-  #recent-posts.recent-posts
-    +postUI
-    include includes/pagination.pug
+var saveToLocal = {
+  set: function setWithExpiry(key, value, ttl) {
+    const now = new Date()
+    const expiryDay = ttl * 86400000
+    const item = {
+      value: value,
+      expiry: now.getTime() + expiryDay,
+    }
+    localStorage.setItem(key, JSON.stringify(item))
+  },
+
+  get: function getWithExpiry(key) {
+    const itemStr = localStorage.getItem(key)
+
+    if (!itemStr) {
+      return undefined
+    }
+    const item = JSON.parse(itemStr)
+    const now = new Date()
+
+    if (now.getTime() > item.expiry) {
+      localStorage.removeItem(key)
+      return undefined
+    }
+    return item.value
+  }
+}
+
+// https://stackoverflow.com/questions/16839698/jquery-getscript-alternative-in-native-javascript
+const getScript = url => new Promise((resolve, reject) => {
+  const script = document.createElement('script')
+  script.src = url
+  script.async = true
+  script.onerror = reject
+  script.onload = script.onreadystatechange = function() {
+    const loadState = this.readyState
+    if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+    script.onload = script.onreadystatechange = null
+    resolve()
+  }
+  document.head.appendChild(script)
+})</script><script id="config_change">var GLOBAL_CONFIG_SITE = { 
+  isPost: false,
+  isHome: true,
+  isHighlightShrink: false,
+  isToc: false,
+  postUpdate: '2020-12-29 22:13:42'
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(function () {  window.activateDarkMode = function () {
+    document.documentElement.setAttribute('data-theme', 'dark')
+    if (document.querySelector('meta[name="theme-color"]') !== null) {
+      document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+    }
+  }
+  window.activateLightMode = function () {
+    document.documentElement.setAttribute('data-theme', 'light')
+   if (document.querySelector('meta[name="theme-color"]') !== null) {
+      document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+    }
+  }
+  const autoChangeMode = 'false'
+  const t = saveToLocal.get('theme')
+  if (autoChangeMode === '1') {
+    const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches
+    const isLightMode = window.matchMedia('(prefers-color-scheme: light)').matches
+    const isNotSpecified = window.matchMedia('(prefers-color-scheme: no-preference)').matches
+    const hasNoSupport = !isDarkMode && !isLightMode && !isNotSpecified
+    if (t === undefined) {
+      if (isLightMode) activateLightMode()
+      else if (isDarkMode) activateDarkMode()
+      else if (isNotSpecified || hasNoSupport) {
+        const now = new Date()
+        const hour = now.getHours()
+        const isNight = hour <= 6 || hour >= 18
+        isNight ? activateDarkMode() : activateLightMode()
+      }
+      window.matchMedia('(prefers-color-scheme: dark)').addListener(function (e) {
+        if (saveToLocal.get('theme') === undefined) {
+          e.matches ? activateDarkMode() : activateLightMode()
+        }
+      })
+    } else if (t === 'light') activateLightMode()
+    else activateDarkMode()
+  } else if (autoChangeMode === '2') {
+    const now = new Date()
+    const hour = now.getHours()
+    const isNight = hour <= 6 || hour >= 18
+    if (t === undefined) isNight ? activateDarkMode() : activateLightMode()
+    else if (t === 'light') activateLightMode()
+    else activateDarkMode()
+  } else {
+    if (t === 'dark') activateDarkMode()
+    else if (t === 'light') activateLightMode()
+  }const asideStatus = saveToLocal.get('aside-status')
+if (asideStatus !== undefined) {
+   if (asideStatus === 'hide') {
+     document.documentElement.classList.add('hide-aside')
+   } else {
+     document.documentElement.classList.remove('hide-aside')
+   }
+}})()</script><meta name="generator" content="Hexo 5.3.0"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="author-avatar"><img class="avatar-img" src="/null" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data"><div class="data-item is-center"><div class="data-item-link"><a href="/archives/"><div class="headline">文章</div><div class="length-num">11</div></a></div></div><div class="data-item is-center"><div class="data-item-link"><a href="/tags/"><div class="headline">标签</div><div class="length-num">30</div></a></div></div><div class="data-item is-center"><div class="data-item-link"><a href="/categories/"><div class="headline">分类</div><div class="length-num">5</div></a></div></div></div><hr/></div></div><div id="body-wrap"><header class="full_page" id="page-header"><nav id="nav"><span id="blog_name"><a id="site-name" href="/">Ron's Blog</a></span><div id="menus"><div id="toggle-menu"><a class="site-page"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="site-info"><h1 id="site-title">Ron's Blog</h1><div id="site-subtitle"><span id="subtitle"></span></div></div><div id="scroll-down"><i class="fas fa-angle-down scroll-down-effects"></i></div></header><main class="layout" id="content-inner"><div class="recent-posts" id="recent-posts"><div class="recent-post-item"><div class="post_cover left_radius"><a href="/2020/12/29/test/" title="test">     <img class="post_bg" src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1/img/default.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="test"></a></div><div class="recent-post-info"><a class="article-title" href="/2020/12/29/test/" title="test">test</a><div class="article-meta-wrap"><span class="post-meta-date"><i class="far fa-calendar-alt"></i><span class="article-meta-label">发表于</span><time datetime="2020-12-29T13:47:06.000Z" title="发表于 2020-12-29 21:47:06">2020-12-29</time></span></div><div class="content"></div></div></div><div class="recent-post-item"><div class="post_cover right_radius"><a href="/2020/12/29/hello-world/" title="Hello World">     <img class="post_bg" src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1/img/default.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Hello World"></a></div><div class="recent-post-info"><a class="article-title" href="/2020/12/29/hello-world/" title="Hello World">Hello World</a><div class="article-meta-wrap"><span class="post-meta-date"><i class="far fa-calendar-alt"></i><span class="article-meta-label">发表于</span><time datetime="2020-12-29T13:35:06.505Z" title="发表于 2020-12-29 21:35:06">2020-12-29</time></span></div><div class="content">Welcome to Hexo! This is your very first post. Check documentation for more info. If you get any problems when using Hexo, you can find the answer in troubleshooting or you can ask me on GitHub.
+Quick StartCreate a new post1$ hexo new &quot;My New Post&quot;
+More info: Writing
+Run server1$ hexo server
+More info: Server
+Generate static files1$ hexo generate
+More info: Generating
+Deploy to remote sites1$ hexo deploy
+More info: Deployment
+</div></div></div><div class="recent-post-item"><div class="post_cover left_radius"><a href="/2020/12/29/WSL+CUDA/" title="Windows 下利用 WSL2 配置 CUDA和pyCUDA">     <img class="post_bg" src="https://cdn.jsdelivr.net/gh/LCX666/picgo-blog/img/wsl-launch-upt-0625-rz.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Windows 下利用 WSL2 配置 CUDA和pyCUDA"></a></div><div class="recent-post-info"><a class="article-title" href="/2020/12/29/WSL+CUDA/" title="Windows 下利用 WSL2 配置 CUDA和pyCUDA">Windows 下利用 WSL2 配置 CUDA和pyCUDA</a><div class="article-meta-wrap"><span class="post-meta-date"><i class="far fa-calendar-alt"></i><span class="article-meta-label">发表于</span><time datetime="2020-12-29T10:11:12.000Z" title="发表于 2020-12-29 18:11:12">2020-12-29</time></span><span class="article-meta"><span class="article-meta__separator">|</span><i class="fas fa-inbox article-meta__icon"></i><a class="article-meta__categories" href="/categories/%E7%8E%AF%E5%A2%83%E9%85%8D%E7%BD%AE/">环境配置</a></span></div><div class="content">0x01 写在前面现在很多项目都是基于 Linux 开发的，但是平常使用还是 Windows 香。（主要是我物理机是 Windows 我又不想装成 Linux
+而有时候 Windows 真的非常不利于开发者，他的各自环境太难配置了，这时候是 Linux 香。
+但是 WSL 才是真的香，启动快，共享空间，现在还能共享 GPU 了。。。。。
+而我本次鉴于某些原因，失去了千辛万苦配置好 Windows 上能跑的 pycuda 的环境，重配又没有成功。好契机。
+不说这么多，我先冲了。希望本教程能帮到你。
+
+
+0x02 确保 WSL22.1 检查现有的WSL版本以管理员身份运行 cmd ，并输入下面的命令，检查准备安装 CUDA 的 Linux 发行版本的 WSL 版本。
+1wsl --list -v
+
+如上图，笔者的两个都是 WSL1 ，居然都是 VERSION = 1。 
+
+幸好笔者在搭建的时候遇到两次没有放弃。重新查阅了别人的博客，这才检查了自己的 WSL 的版本，才发现居然都是版本1，尽管在搭建之前已经执行了命令 wsl --set-default-version 2 设置默认版本为 W ...</div></div></div><div class="recent-post-item"><div class="post_cover right_radius"><a href="/2020/12/28/WSL2%E5%AE%89%E8%A3%85/" title="Windows 使用 lxrunoffline 安装 WSL、WSL2">     <img class="post_bg" src="https://cdn.jsdelivr.net/gh/LCX666/picgo-blog/img/Install_WSL_on_Win10.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Windows 使用 lxrunoffline 安装 WSL、WSL2"></a></div><div class="recent-post-info"><a class="article-title" href="/2020/12/28/WSL2%E5%AE%89%E8%A3%85/" title="Windows 使用 lxrunoffline 安装 WSL、WSL2">Windows 使用 lxrunoffline 安装 WSL、WSL2</a><div class="article-meta-wrap"><span class="post-meta-date"><i class="far fa-calendar-alt"></i><span class="article-meta-label">发表于</span><time datetime="2020-12-28T10:33:52.000Z" title="发表于 2020-12-28 18:33:52">2020-12-28</time></span><span class="article-meta"><span class="article-meta__separator">|</span><i class="fas fa-inbox article-meta__icon"></i><a class="article-meta__categories" href="/categories/%E7%8E%AF%E5%A2%83%E9%85%8D%E7%BD%AE/">环境配置</a></span></div><div class="content">0x01 写在前面笔者认为似乎应该在前面写点什么，但是又不知道写点什么，于是就写了这段话。或许笔者正在思考怎么写这段话。
+关于 WSL 有什么好，或者有什么比较方便的地方，这里不多赘述。
+多图预警。
+
+
+0x02 官方教程配置环境2.1 加入体验计划首先进入 设置 → 更新和安全 → Windows预览体验计划 然后选择开始，加入此计划。然后选择 Dev ，然后一路默认。
+
+如果点进来是一片空白，根据官方提示，需要修改一个地方：
+在设置中搜索 诊断数据，打开 诊断和数据，修改为 可选诊断数据 即可出现上述的界面，而不是白的了。可参考。
+
+
+
+
+
+
+2.1.2 更新系统版本重启之后，进入设置中的 Windows 更新，在下图所示的 高级选项 中选择 更新 Windows 时接受其他 Microsoft 产品更新。
+然后返回更新页面，开始进行更新，这个过程可能会反复很多次，耗时也比较久。
+
+
+
+
+
+
+2.1.3 检查系统版本更新完毕后，需要检查当前的系统版本是否满足要求了。 按住 win + R 输入命令：winver ，即可以查看下图的信息。
+WSL要求系统版本 2004 以上，微软官方 ...</div></div></div><div class="recent-post-item"><div class="post_cover left_radius"><a href="/2020/11/27/ubuntu_opencv_face_reconginition/" title="opcv + face_recognition 实现人脸实时识别">     <img class="post_bg" src="https://cdn.jsdelivr.net/gh/LCX666/picgo-blog/img/face_recognition.gif" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="opcv + face_recognition 实现人脸实时识别"></a></div><div class="recent-post-info"><a class="article-title" href="/2020/11/27/ubuntu_opencv_face_reconginition/" title="opcv + face_recognition 实现人脸实时识别">opcv + face_recognition 实现人脸实时识别</a><div class="article-meta-wrap"><span class="post-meta-date"><i class="far fa-calendar-alt"></i><span class="article-meta-label">发表于</span><time datetime="2020-11-27T03:24:13.000Z" title="发表于 2020-11-27 11:24:13">2020-11-27</time></span><span class="article-meta"><span class="article-meta__separator">|</span><i class="fas fa-inbox article-meta__icon"></i><a class="article-meta__categories" href="/categories/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0/">深度学习</a></span></div><div class="content">0x01 写在前面本学期有一门专业选修课《大数据分析与隐私保护》，期末需要完成一个小组项目，也不是很复杂就是想让我们玩玩神经网络啊，深度学习啊啥的。
+于是和小组成员Hiram和driveTom简单讨论了几个想法之后，遂决定把想法都试试，看看可行性。
+于是我搜集资料的过程中找到了大佬们的库face_recognition，测试了下效果局得还不错。于是便和成员决定试试看。
+0x02 安装 face_recognition大概浏览了网上的教程，似乎都说得挺难的。我就怀着忐忑的信息试了试。（最开始是在百度的 aistudio 上试的，感谢百度。 
+1pip install face_recognition
+虽然过程慢的一批，但是还是一瞬成功了。而后面的使用也是成功的，说明确实是一瞬成功了。
+然后看网上说的，这个是有很多C语言整的，可能比较麻烦。我尝试在我的 Windows 10 上进行安装，果不其然出错了。说是缺少 cmake 。想着 Windows 上整这玩意比较麻烦，于是我就想转到我的 Ubuntu 虚拟机中试试。于是有了后文。
+Ubuntu 中首先安装一下 cmake 如果没有的话
+1s ...</div></div></div><div class="recent-post-item"><div class="post_cover right_radius"><a href="/2020/11/19/XSS&amp;SQL/" title="XSS&amp;SQL笔记">     <img class="post_bg" src="https://cdn.jsdelivr.net/gh/LCX666/picgo-blog/img/XSS%26SQL.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="XSS&amp;SQL笔记"></a></div><div class="recent-post-info"><a class="article-title" href="/2020/11/19/XSS&amp;SQL/" title="XSS&amp;SQL笔记">XSS&amp;SQL笔记</a><div class="article-meta-wrap"><span class="post-meta-date"><i class="far fa-calendar-alt"></i><span class="article-meta-label">发表于</span><time datetime="2020-11-19T12:36:29.000Z" title="发表于 2020-11-19 20:36:29">2020-11-19</time></span><span class="article-meta"><span class="article-meta__separator">|</span><i class="fas fa-inbox article-meta__icon"></i><a class="article-meta__categories" href="/categories/%E7%BB%83%E4%B9%A0/">练习</a></span></div><div class="content">0x01 写在前面本文是对《网络攻防技术》课程关于XSS实验和SQL实验的总结，学习过程使用的是基础的学习网站XSS和SQLi-labs。
+基础入门中……且题目还没有刷完，仅在这里慢慢记录，有空就记录一部分再慢慢更新。
+同时，希望读者知道有个东西叫做《网络安全法》，请勿在未授权的情况下做任何的尝试。本实验仅在搭建的虚拟环境中实施。
+0x02 XSS 攻击2.1 XSS 攻击原理2.1.1 基本原理跨站脚本（英语：Cross-site scripting，通常简称为：XSS）是一种网站应用程序的安全漏洞攻击，是代码注入的一种。它允许恶意用户将代码注入到网页上，其他用户在观看网页时就会受到影响。这类攻击通常包含了HTML以及用户端脚本语言。
+XSS攻击通常指的是通过利用网页开发时留下的漏洞，通过巧妙的方法注入恶意指令代码到网页，使用户加载并执行攻击者恶意制造的网页程序。这些恶意网页程序通常是JavaScript，但实际上也可以包括Java，VBScript，ActiveX，Flash或者甚至是普通的HTML。攻击成功后，攻击者可能得到更高的权限（如执行一些操作）、私密网页内容、会话和coo ...</div></div></div><div class="recent-post-item"><div class="post_cover left_radius"><a href="/2020/11/12/pwn%E7%9A%84%E5%88%9D%E4%BD%93%E9%AA%8C/" title="pwd的初体验">     <img class="post_bg" src="https://cdn.jsdelivr.net/gh/LCX666/picgo-blog/img/10184721-1bfc4aca79bc4c8e862c477f71a7b40b.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="pwd的初体验"></a></div><div class="recent-post-info"><a class="article-title" href="/2020/11/12/pwn%E7%9A%84%E5%88%9D%E4%BD%93%E9%AA%8C/" title="pwd的初体验">pwd的初体验</a><div class="article-meta-wrap"><span class="post-meta-date"><i class="far fa-calendar-alt"></i><span class="article-meta-label">发表于</span><time datetime="2020-11-12T07:11:49.000Z" title="发表于 2020-11-12 15:11:49">2020-11-12</time></span><span class="article-meta"><span class="article-meta__separator">|</span><i class="fas fa-inbox article-meta__icon"></i><a class="article-meta__categories" href="/categories/%E7%BB%83%E4%B9%A0/">练习</a></span></div><div class="content">0x01 写在前面本文就本学期的一门课程《网络攻防技术》的一次作业进行了比较详细的记录，旨在加深对栈溢出过程的原理的理解。限于个人认知有限，文中若有纰漏还请指出批评。本文记录的是一个最基本最简单的栈溢出实例，通过构造payload对一个存在漏洞的服务器进行攻击，从而拿到对方的shell。
+使用 msf 一键搞定 or 结合 pwntools 也可以搞定，但不是本文的目的。
+同时，希望读者知道有个东西叫做《网络安全法》，请勿在未授权的情况下做任何的尝试。本实验仅在搭建的虚拟环境中实施。
+0x02 实验背景本次实验全部在自己的虚拟机中完成。
+攻击机：kali2020
+靶机：Lite XP
+实验中给定了一个server的c源代码，要求对其进行攻击获取shell。
+0x03 实验过程3.1 源码分析首先分析存在漏洞的源码，源码文件如下：
+1234567891011121314151617181920212223242526272829303132333435363738394041424344454647484950515253545556575859606162636465666768697 ...</div></div></div><div class="recent-post-item"><div class="post_cover right_radius"><a href="/2020/09/15/latex%E9%85%8D%E7%BD%AE/" title="Windows 下 latex 配置">     <img class="post_bg" src="https://www.latex-project.org/img/latex-project-logo.svg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Windows 下 latex 配置"></a></div><div class="recent-post-info"><a class="article-title" href="/2020/09/15/latex%E9%85%8D%E7%BD%AE/" title="Windows 下 latex 配置">Windows 下 latex 配置</a><div class="article-meta-wrap"><span class="post-meta-date"><i class="far fa-calendar-alt"></i><span class="article-meta-label">发表于</span><time datetime="2020-09-15T07:21:32.000Z" title="发表于 2020-09-15 15:21:32">2020-09-15</time></span><span class="article-meta"><span class="article-meta__separator">|</span><i class="fas fa-inbox article-meta__icon"></i><a class="article-meta__categories" href="/categories/%E7%8E%AF%E5%A2%83%E9%85%8D%E7%BD%AE/">环境配置</a></span></div><div class="content">Windows 下latex的配置（word插件+独立编译pdf）
+latex是干啥的呢？帕拉帕拉一堆，随便搜索一下就好啦，这里只讲怎么配置好和怎么用。
+
+0x01 word插件下载 aurora： 链接1，提取码：ms6q  （PS：来源于参考链接1）
+下载miktex，官网链接。
+由于它很久很久没更新了，所以需要把系统时间调回2009年来进行安装，然后运行成功一次之后，就可以把系统的时间调整回来了。
+下载的文件包含了安装包和注册机，注册机随便输入点英文字母就可以进行注册了。
+随便安装在哪里都可，记住路径就好。记住先调整时间哈。2009年的某一天 安装aurora的时候不要勾选默认的miktex，aurora太旧了很久没有更新了，下载出来的也是旧版本的。
+然后你应该会发现你的word(我这边是office 2019)打开会显示激活失败，而且你还无法进行编辑，也就是word就不能用了。那就没法了，我就只能把时间调整回来了。然后破罐子破摔了。
+打开word，在上面应该是有一个aurora的玩意，点击它，最左边有个玩意，再点一下，会弹出来一个玩意。
+
+对就是下面这个玩意 然后点击这个pro ...</div></div></div><div class="recent-post-item"><div class="post_cover left_radius"><a href="/2020/08/30/2020%E5%9B%BD%E8%B5%9B%E8%A7%85%E9%A9%AC/" title="2020国赛觅马wp">     <img class="post_bg" src="https://cdn.jsdelivr.net/gh/LCX666/picgo-blog/img/2020%E5%9B%BD%E8%B5%9B%E6%B5%B7%E6%8A%A5.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="2020国赛觅马wp"></a></div><div class="recent-post-info"><a class="article-title" href="/2020/08/30/2020%E5%9B%BD%E8%B5%9B%E8%A7%85%E9%A9%AC/" title="2020国赛觅马wp">2020国赛觅马wp</a><div class="article-meta-wrap"><span class="post-meta-date"><i class="far fa-calendar-alt"></i><span class="article-meta-label">发表于</span><time datetime="2020-08-30T13:21:19.000Z" title="发表于 2020-08-30 21:21:19">2020-08-30</time></span><span class="article-meta"><span class="article-meta__separator">|</span><i class="fas fa-inbox article-meta__icon"></i><a class="article-meta__categories" href="/categories/CTF/">CTF</a></span></div><div class="content">
+本篇是对《第十三届全国大学生信息安全竞赛创新实践能力赛（线上初赛）》参赛经历的一个整理。
+
+bd题目描述如此：
+
+数学在密码学里面很重要的！现在知道吃亏了吧！
+
+显然，他说的是大实话，确实应该好好学习数学。
+下载附件，可以看到里面是一个py文件，文件内容如下：
+12345678910111213141516171819202122from secret import flagfrom Crypto.Util.number import *m = bytes_to_long(flag)p = getPrime(512)q = getPrime(512)N = p * qphi = (p-1) * (q-1)while True:    d = getRandomNBitInteger(200)    if GCD(d, phi) == 1:        e = inverse(d, phi)        breakc = pow(m, e, N)print(c, e, N, sep=&#x27;\n&#x27;)# 376250981090817017745716137852793 ...</div></div></div><div class="recent-post-item"><div class="post_cover right_radius"><a href="/2020/08/11/%E6%9D%82%E9%A1%B9/" title="杂项">     <img class="post_bg" src="https://cdn.jsdelivr.net/gh/LCX666/picgo-blog/img/helpful-tips-picture-id933100878.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="杂项"></a></div><div class="recent-post-info"><a class="article-title" href="/2020/08/11/%E6%9D%82%E9%A1%B9/" title="杂项">杂项</a><div class="article-meta-wrap"><span class="post-meta-date"><i class="far fa-calendar-alt"></i><span class="article-meta-label">发表于</span><time datetime="2020-08-11T07:54:33.000Z" title="发表于 2020-08-11 15:54:33">2020-08-11</time></span><span class="article-meta"><span class="article-meta__separator">|</span><i class="fas fa-inbox article-meta__icon"></i><a class="article-meta__categories" href="/categories/%E6%9D%82%E9%A1%B9/">杂项</a></span></div><div class="content">chrome/新edge 强制暗黑模式12Chrome：chrome:&#x2F;&#x2F;flags&#x2F;#enable-force-darkEdge：edge:&#x2F;&#x2F;flags&#x2F;#enable-force-dark
+参考：https://www.appinn.com/enable-force-dark-for-chrome-and-edge/
+Ubuntu 升级 node&amp;npmUbuntu18.04 默认安装了 Nodejs v8.x 版本
+升级
+123456$ curl -sL https:&#x2F;&#x2F;deb.nodesource.com&#x2F;setup_10.x -o nodesource_setup.sh$ sudo bash nodesource_setup.sh$ sudo apt install nodejs# 需要从源代码编译代码的 NPM 包$ sudo apt install build-essential
+检查
+12$ node -v$ npm -v
+参考：https://learnku.com/a ...</div></div></div><nav id="pagination"><div class="pagination"><span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><a class="extend next" rel="next" href="/page/2/"><i class="fas fa-chevron-right fa-fw"></i></a></div></nav></div><div class="aside_content" id="aside_content"><div class="card-widget card-info"><div class="card-content"><div class="card-info-avatar is-center"><img class="avatar-img" src="/null" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/><div class="author-info__name">Ron</div><div class="author-info__description">old but lowlevel OIer and a young CTFer</div></div><div class="card-info-data"><div class="card-info-data-item is-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">11</div></a></div><div class="card-info-data-item is-center"><a href="/tags/"><div class="headline">标签</div><div class="length-num">30</div></a></div><div class="card-info-data-item is-center"><a href="/categories/"><div class="headline">分类</div><div class="length-num">5</div></a></div></div><a class="button--animated" id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/xxxxxx"><i class="fab fa-github"></i><span>Follow Me</span></a></div></div><div class="card-widget card-announcement"><div class="card-content"><div class="item-headline"><i class="fas fa-bullhorn card-announcement-animation"></i><span>公告</span></div><div class="announcement_content">This is my Blog</div></div></div><div class="sticky_layout"><div class="card-widget card-recent-post"><div class="card-content"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/2020/12/29/test/" title="test"><img src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1/img/default.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="test"/></a><div class="content"><a class="title" href="/2020/12/29/test/" title="test">test</a><time datetime="2020-12-29T13:47:06.000Z" title="发表于 2020-12-29 21:47:06">2020-12-29</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2020/12/29/hello-world/" title="Hello World"><img src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1/img/default.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Hello World"/></a><div class="content"><a class="title" href="/2020/12/29/hello-world/" title="Hello World">Hello World</a><time datetime="2020-12-29T13:35:06.505Z" title="发表于 2020-12-29 21:35:06">2020-12-29</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2020/12/29/WSL+CUDA/" title="Windows 下利用 WSL2 配置 CUDA和pyCUDA"><img src="https://cdn.jsdelivr.net/gh/LCX666/picgo-blog/img/wsl-launch-upt-0625-rz.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Windows 下利用 WSL2 配置 CUDA和pyCUDA"/></a><div class="content"><a class="title" href="/2020/12/29/WSL+CUDA/" title="Windows 下利用 WSL2 配置 CUDA和pyCUDA">Windows 下利用 WSL2 配置 CUDA和pyCUDA</a><time datetime="2020-12-29T10:11:12.000Z" title="发表于 2020-12-29 18:11:12">2020-12-29</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2020/12/28/WSL2%E5%AE%89%E8%A3%85/" title="Windows 使用 lxrunoffline 安装 WSL、WSL2"><img src="https://cdn.jsdelivr.net/gh/LCX666/picgo-blog/img/Install_WSL_on_Win10.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Windows 使用 lxrunoffline 安装 WSL、WSL2"/></a><div class="content"><a class="title" href="/2020/12/28/WSL2%E5%AE%89%E8%A3%85/" title="Windows 使用 lxrunoffline 安装 WSL、WSL2">Windows 使用 lxrunoffline 安装 WSL、WSL2</a><time datetime="2020-12-28T10:33:52.000Z" title="发表于 2020-12-28 18:33:52">2020-12-28</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2020/11/27/ubuntu_opencv_face_reconginition/" title="opcv + face_recognition 实现人脸实时识别"><img src="https://cdn.jsdelivr.net/gh/LCX666/picgo-blog/img/face_recognition.gif" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="opcv + face_recognition 实现人脸实时识别"/></a><div class="content"><a class="title" href="/2020/11/27/ubuntu_opencv_face_reconginition/" title="opcv + face_recognition 实现人脸实时识别">opcv + face_recognition 实现人脸实时识别</a><time datetime="2020-11-27T03:24:13.000Z" title="发表于 2020-11-27 11:24:13">2020-11-27</time></div></div></div></div></div><div class="card-widget card-categories"><div class="card-content"><div class="item-headline"><i class="fas fa-folder-open"></i><span>分类</span></div><ul class="card-category-list" id="aside-cat-list">
+            <li class="card-category-list-item "><a class="card-category-list-link" href="/categories/CTF/"><span class="card-category-list-name">CTF</span><span class="card-category-list-count">1</span></a></li><li class="card-category-list-item "><a class="card-category-list-link" href="/categories/%E6%9D%82%E9%A1%B9/"><span class="card-category-list-name">杂项</span><span class="card-category-list-count">1</span></a></li><li class="card-category-list-item "><a class="card-category-list-link" href="/categories/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0/"><span class="card-category-list-name">深度学习</span><span class="card-category-list-count">1</span></a></li><li class="card-category-list-item "><a class="card-category-list-link" href="/categories/%E7%8E%AF%E5%A2%83%E9%85%8D%E7%BD%AE/"><span class="card-category-list-name">环境配置</span><span class="card-category-list-count">4</span></a></li><li class="card-category-list-item "><a class="card-category-list-link" href="/categories/%E7%BB%83%E4%B9%A0/"><span class="card-category-list-name">练习</span><span class="card-category-list-count">2</span></a></li>
+            
+            </ul></div></div><div class="card-widget card-tags"><div class="card-content"><div class="item-headline"><i class="fas fa-tags"></i><span>标签</span></div><div class="card-tag-cloud"><a href="/tags/CTF/" style="font-size: 1.37em; color: #99a4b2">CTF</a> <a href="/tags/CUDA/" style="font-size: 1.1em; color: #999">CUDA</a> <a href="/tags/Crypto/" style="font-size: 1.1em; color: #999">Crypto</a> <a href="/tags/Linux/" style="font-size: 1.23em; color: #999ea6">Linux</a> <a href="/tags/MiKTeX/" style="font-size: 1.1em; color: #999">MiKTeX</a> <a href="/tags/PWN/" style="font-size: 1.1em; color: #999">PWN</a> <a href="/tags/Q-A/" style="font-size: 1.1em; color: #999">Q&A</a> <a href="/tags/SQL%E6%B3%A8%E5%85%A5/" style="font-size: 1.1em; color: #999">SQL注入</a> <a href="/tags/WSL/" style="font-size: 1.23em; color: #999ea6">WSL</a> <a href="/tags/WSL2/" style="font-size: 1.1em; color: #999">WSL2</a> <a href="/tags/Windows/" style="font-size: 1.37em; color: #99a4b2">Windows</a> <a href="/tags/XSS%E6%94%BB%E5%87%BB/" style="font-size: 1.1em; color: #999">XSS攻击</a> <a href="/tags/blog/" style="font-size: 1.1em; color: #999">blog</a> <a href="/tags/face-recognition/" style="font-size: 1.1em; color: #999">face recognition</a> <a href="/tags/github/" style="font-size: 1.1em; color: #999">github</a> <a href="/tags/hexo/" style="font-size: 1.1em; color: #999">hexo</a> <a href="/tags/latex/" style="font-size: 1.1em; color: #999">latex</a> <a href="/tags/opencv/" style="font-size: 1.1em; color: #999">opencv</a> <a href="/tags/pycuda/" style="font-size: 1.1em; color: #999">pycuda</a> <a href="/tags/tips/" style="font-size: 1.1em; color: #999">tips</a> <a href="/tags/ubuntu/" style="font-size: 1.1em; color: #999">ubuntu</a> <a href="/tags/wp/" style="font-size: 1.1em; color: #999">wp</a> <a href="/tags/zeit/" style="font-size: 1.1em; color: #999">zeit</a> <a href="/tags/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD/" style="font-size: 1.1em; color: #999">人工智能</a> <a href="/tags/%E4%BA%BA%E8%84%B8%E8%AF%86%E5%88%AB/" style="font-size: 1.1em; color: #999">人脸识别</a> <a href="/tags/%E6%9D%82%E9%A1%B9/" style="font-size: 1.1em; color: #999">杂项</a> <a href="/tags/%E6%A0%88%E6%BA%A2%E5%87%BA/" style="font-size: 1.1em; color: #999">栈溢出</a> <a href="/tags/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0/" style="font-size: 1.1em; color: #999">深度学习</a> <a href="/tags/%E7%AC%94%E8%AE%B0/" style="font-size: 1.23em; color: #999ea6">笔记</a> <a href="/tags/%E9%85%8D%E7%BD%AE/" style="font-size: 1.5em; color: #99a9bf">配置</a></div></div></div><div class="card-widget card-archives"><div class="card-content"><div class="item-headline"><i class="fas fa-archive"></i><span>归档</span></div><ul class="card-archive-list"><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2020/12/"><span class="card-archive-list-date">十二月 2020</span><span class="card-archive-list-count">4</span></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2020/11/"><span class="card-archive-list-date">十一月 2020</span><span class="card-archive-list-count">3</span></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2020/09/"><span class="card-archive-list-date">九月 2020</span><span class="card-archive-list-count">1</span></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2020/08/"><span class="card-archive-list-date">八月 2020</span><span class="card-archive-list-count">3</span></a></li></ul></div></div><div class="card-widget card-webinfo"><div class="card-content"><div class="item-headline"><i class="fas fa-chart-line"></i><span>网站资讯</span></div><div class="webinfo"><div class="webinfo-item"><div class="item-name">文章数目 :</div><div class="item-count">11</div></div><div class="webinfo-item"><div class="item-name">本站访客数 :</div><div class="item-count" id="busuanzi_value_site_uv"></div></div><div class="webinfo-item"><div class="item-name">本站总访问量 :</div><div class="item-count" id="busuanzi_value_site_pv"></div></div><div class="webinfo-item"><div class="item-name">最后更新时间 :</div><div class="item-count" id="last-push-date" data-lastPushDate="2020-12-29T14:13:42.235Z"></div></div></div></div></div></div></div></main><footer id="footer"><div id="footer-wrap"><div class="copyright">&copy;2020 By Ron</div><div class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly</a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside_config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button id="go-up" type="button" title="回到顶部"><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"><script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div></div></body></html>
