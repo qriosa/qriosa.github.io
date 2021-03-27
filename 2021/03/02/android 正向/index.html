@@ -1,0 +1,620 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Android 正向入门基础知识 | Ron's Blog</title><meta name="keywords" content="Android"><meta name="author" content="Ron"><meta name="copyright" content="Ron"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta http-equiv="Cache-Control" content="no-transform"><meta http-equiv="Cache-Control" content="no-siteapp"><meta name="description" content="关于 Android 正向开发的知识记录。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Android 正向入门基础知识">
+<meta property="og:url" content="https://lucxer.tk/2021/03/02/android%20%E6%AD%A3%E5%90%91/index.html">
+<meta property="og:site_name" content="Ron&#39;s Blog">
+<meta property="og:description" content="关于 Android 正向开发的知识记录。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/LCX666/picgo-blog/img/android.jfif">
+<meta property="article:published_time" content="2021-03-02T14:12:21.000Z">
+<meta property="article:modified_time" content="2021-03-27T13:40:12.248Z">
+<meta property="article:author" content="Ron">
+<meta property="article:tag" content="Android">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://cdn.jsdelivr.net/gh/LCX666/picgo-blog/img/android.jfif"><link rel="shortcut icon" href="/img/favicon.ico"><link rel="canonical" href="https://lucxer.tk/2021/03/02/android%20%E6%AD%A3%E5%90%91/"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="preconnect" href="//zz.bdstatic.com"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/instantsearch.js@2.10.5/dist/instantsearch.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/instantsearch.js@2.10.5/dist/instantsearch.min.js" defer></script><script>var GLOBAL_CONFIG = { 
+  root: '/',
+  algolia: {"appId":"YJRLD9BYXZ","apiKey":"6098438f46d523cb882b858aed7b9962","indexName":"blog","hits":{"per_page":6},"languages":{"input_placeholder":"搜索文章","hits_empty":"找不到您查询的内容：${query}","hits_stats":"找到 ${hits} 条结果，用时 ${time} 毫秒"}},
+  localSearch: undefined,
+  translate: undefined,
+  noticeOutdate: {"limitDay":365,"position":"top","messagePrev":"It has been","messageNext":"days since the last update, the content of the article may be outdated."},
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '天',
+  date_suffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"你已切换为繁体","cht_to_chs":"你已切换为简体","day_to_night":"你已切换为深色模式","night_to_day":"你已切换为浅色模式","bgLight":"#49b1f5","bgDark":"#121212","position":"bottom-left"},
+  source: {
+    jQuery: 'https://cdn.jsdelivr.net/npm/jquery@latest/dist/jquery.min.js',
+    justifiedGallery: {
+      js: 'https://cdn.jsdelivr.net/npm/justifiedGallery/dist/js/jquery.justifiedGallery.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/justifiedGallery/dist/css/justifiedGallery.min.css'
+    },
+    fancybox: {
+      js: 'https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@latest/dist/jquery.fancybox.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@latest/dist/jquery.fancybox.min.css'
+    }
+  },
+  isPhotoFigcaption: true,
+  islazyload: true,
+  isanchor: true
+};
+
+var saveToLocal = {
+  set: function setWithExpiry(key, value, ttl) {
+    const now = new Date()
+    const expiryDay = ttl * 86400000
+    const item = {
+      value: value,
+      expiry: now.getTime() + expiryDay,
+    }
+    localStorage.setItem(key, JSON.stringify(item))
+  },
+
+  get: function getWithExpiry(key) {
+    const itemStr = localStorage.getItem(key)
+
+    if (!itemStr) {
+      return undefined
+    }
+    const item = JSON.parse(itemStr)
+    const now = new Date()
+
+    if (now.getTime() > item.expiry) {
+      localStorage.removeItem(key)
+      return undefined
+    }
+    return item.value
+  }
+}
+
+// https://stackoverflow.com/questions/16839698/jquery-getscript-alternative-in-native-javascript
+const getScript = url => new Promise((resolve, reject) => {
+  const script = document.createElement('script')
+  script.src = url
+  script.async = true
+  script.onerror = reject
+  script.onload = script.onreadystatechange = function() {
+    const loadState = this.readyState
+    if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+    script.onload = script.onreadystatechange = null
+    resolve()
+  }
+  document.head.appendChild(script)
+})</script><script id="config_change">var GLOBAL_CONFIG_SITE = { 
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: true,
+  isToc: true,
+  postUpdate: '2021-03-27 21:40:12'
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(function () {  window.activateDarkMode = function () {
+    document.documentElement.setAttribute('data-theme', 'dark')
+    if (document.querySelector('meta[name="theme-color"]') !== null) {
+      document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+    }
+  }
+  window.activateLightMode = function () {
+    document.documentElement.setAttribute('data-theme', 'light')
+   if (document.querySelector('meta[name="theme-color"]') !== null) {
+      document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+    }
+  }
+  const autoChangeMode = '1'
+  const t = saveToLocal.get('theme')
+  if (autoChangeMode === '1') {
+    const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches
+    const isLightMode = window.matchMedia('(prefers-color-scheme: light)').matches
+    const isNotSpecified = window.matchMedia('(prefers-color-scheme: no-preference)').matches
+    const hasNoSupport = !isDarkMode && !isLightMode && !isNotSpecified
+    if (t === undefined) {
+      if (isLightMode) activateLightMode()
+      else if (isDarkMode) activateDarkMode()
+      else if (isNotSpecified || hasNoSupport) {
+        const now = new Date()
+        const hour = now.getHours()
+        const isNight = hour <= 6 || hour >= 18
+        isNight ? activateDarkMode() : activateLightMode()
+      }
+      window.matchMedia('(prefers-color-scheme: dark)').addListener(function (e) {
+        if (saveToLocal.get('theme') === undefined) {
+          e.matches ? activateDarkMode() : activateLightMode()
+        }
+      })
+    } else if (t === 'light') activateLightMode()
+    else activateDarkMode()
+  } else if (autoChangeMode === '2') {
+    const now = new Date()
+    const hour = now.getHours()
+    const isNight = hour <= 6 || hour >= 18
+    if (t === undefined) isNight ? activateDarkMode() : activateLightMode()
+    else if (t === 'light') activateLightMode()
+    else activateDarkMode()
+  } else {
+    if (t === 'dark') activateDarkMode()
+    else if (t === 'light') activateLightMode()
+  }const asideStatus = saveToLocal.get('aside-status')
+if (asideStatus !== undefined) {
+   if (asideStatus === 'hide') {
+     document.documentElement.classList.add('hide-aside')
+   } else {
+     document.documentElement.classList.remove('hide-aside')
+   }
+}const fontSizeVal = saveToLocal.get('global-font-size')
+if (fontSizeVal !== undefined) {
+  document.documentElement.style.setProperty('--global-font-size', fontSizeVal + 'px')
+}})()</script><meta name="generator" content="Hexo 5.3.0"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="author-avatar"><img class="avatar-img" data-lazy-src="/img/kid.jpg" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data"><div class="data-item is-center"><div class="data-item-link"><a href="/archives/"><div class="headline">文章</div><div class="length-num">16</div></a></div></div><div class="data-item is-center"><div class="data-item-link"><a href="/tags/"><div class="headline">标签</div><div class="length-num">41</div></a></div></div><div class="data-item is-center"><div class="data-item-link"><a href="/categories/"><div class="headline">分类</div><div class="length-num">6</div></a></div></div></div><hr/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 时间轴</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> 关于</span></a></div></div></div></div><div id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(https://cdn.jsdelivr.net/gh/LCX666/picgo-blog/img/android.jfif)"><nav id="nav"><span id="blog_name"><a id="site-name" href="/">Ron's Blog</a></span><div id="menus"><div id="search-button"><a class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 时间轴</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> 关于</span></a></div></div><div id="toggle-menu"><a class="site-page"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="post-info"><h1 class="post-title">Android 正向入门基础知识</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2021-03-02T14:12:21.000Z" title="发表于 2021-03-02 22:12:21">2021-03-02</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2021-03-27T13:40:12.248Z" title="更新于 2021-03-27 21:40:12">2021-03-27</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/Android/">Android</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">字数总计:</span><span class="word-count">8.8k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>30分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">阅读量:</span><span id="busuanzi_value_page_pv"></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><blockquote>
+<p>本文是对 Android 正向开发的过程记录。</p>
+<p>基本上是零基础第一次看安卓相关的知识，因此此文仅仅是查阅了网上的一些博客，将一些必要的内容进行了整理和记录。其中还要很多知识并未完全消化理解。但记无妨，待日后有一定的基础时再来细细琢磨。</p>
+</blockquote>
+<h1 id="Android-四大组件"><a href="#Android-四大组件" class="headerlink" title="Android 四大组件"></a>Android 四大组件</h1><blockquote>
+<p>Android 开发的四大组件分别是：</p>
+<p>活动（Activity），用于表现功能；</p>
+<p>服务（Service），后台运行服务，不提供界面呈现；</p>
+<p>广播接受者（Broadcast Receive），用于接收广播；</p>
+<p>内容提供者（Content Provider），支持多个应用中存储和读取数据，相当于数据库</p>
+</blockquote>
+<h2 id="1、Activity"><a href="#1、Activity" class="headerlink" title="1、Activity"></a>1、Activity</h2><ol>
+<li>Activity 之间通过 Intent 进行通信</li>
+<li>安卓应用的每一个 Activity 都必须要在 <code>AndroidManifest.xml</code> 配置文件中进行生命，否则系统将不会识别，同时也不会执行此 Activity。</li>
+<li>Activity 会被压入栈中，一共有四种生命周期。运行中；暂停；停止；销毁；<ul>
+<li>值得注意的是，暂停与停止的区别。</li>
+<li>暂停是当前 Activity 被另外的（<strong>非全屏的，或者透明的</strong>）挡住了，有别的 Activity 在前面。于是他无法与用户进行交互了，但是他的各种资源都还在内存中，除非系统的内存资源极低，系统才会去销毁此 Activity。</li>
+<li>停止是当前的 Activity 被另一个 Activity <strong>完全覆盖了</strong>或者用户按下 <code>HOME</code> 返回主菜单的时候，就会进去的。当系统的别的地方需要用到内容时，系统会自动的去销毁 Activity。</li>
+</ul>
+</li>
+</ol>
+<h2 id="2、Service"><a href="#2、Service" class="headerlink" title="2、Service"></a>2、Service</h2><p>它通常用作在后台处理耗时的逻辑，与Activity一样，它存在自己的生命周期，也需要在AndroidManifest.xml配置相关信息。</p>
+<p>服务（Service)是 Android 中实现程序后台运行的解决方案，它非常适合去执行那些不需要和用户交互而且还要求长期运行的任务。服务的运行不依赖于任何用户界面，即使程序被切换到后台，或者用户打开了另外一个应用程序，服务仍然能够保持正常运行。</p>
+<p>服务并不是运行在一个独立的进程当中的，而是依赖于创建服务时所在的应用程序进程。与某个应用程序进程被杀掉时，所有依赖于该进程的服务也会停止运行。另外.也不要被服务的后台概念所迷惑，实际上服务并不会自动开启线程，所有的代码都是默认运行在主线程当中的。也就是说，我们需要在服务的内部手动创建子线程，并在这里执行具体的任务，否则就有可能出现主线程被阻塞住的情况。</p>
+<p>service用于在后台完成用户指定的操作。Service 分为两种：</p>
+<ol>
+<li>started（启动）：当应用程序组件（如 Activity）调用 <code>startService()</code> 方法启动服务时，服务处于 started 状态。</li>
+<li>bound（绑定）：当应用程序组件调用 <code>bindService()</code> 方法绑定到服务时，服务处于 bound 状态。</li>
+</ol>
+<p><code>startService()</code> 与 <code>bindService()</code> 区别：</p>
+<ol>
+<li>started service（启动服务）是由其他组件调用 <code>startService()</code> 方法启动的，这导致服务的<code>onStartCommand()</code> 方法被调用。当服务是 started 状态时，其生命周期与启动它的组件无关，并且可以在后台无限期运行，即使启动服务的组件已经被销毁。因此，服务需要在完成任务后调用 <code>stopSelf()</code> 方法停止，或者由其他组件调用 <code>stopService()</code> 方法停止。</li>
+<li>使用 <code>bindService()</code> 方法启用服务，调用者与服务绑定在了一起，调用者一旦退出，服务也就终止，大有“不求同时生，必须同时死”的特点。</li>
+</ol>
+<p>Service 组件通常用于为其他组件提供后台服务或监控其他组件的运行状态。</p>
+<p>注意：Service 的 <code>onCreate()</code> 是在主线程（ActivityThread）中调用的，耗时操作会阻塞 UI， 如果需要做耗时的操作，则应该考虑使用 多线程或者 handler。</p>
+<h3 id="IntentService"><a href="#IntentService" class="headerlink" title="IntentService"></a>IntentService</h3><p>是否知道 IntentService，在什么场景下使用 IntentService？</p>
+<p>IntentService 相比父类 Service 而言，最大特点是其回调函数onHandleIntent中可以直接进行耗时操作，不必再开线程。其原理是 IntentService 的成员变量 Handler在初始化时已属于工作线程，之后handleMessage，包括 onHandleIntent 等函数都运行在工作线程中。</p>
+<p>如果对 IntentService 的了解仅限于此，会有种 IntentService 很鸡肋的观点，因为在 Service 中开线程进行耗时操作也不麻烦。我当初也是这个观点，所以很少用 IntentService。</p>
+<p>但是 IntentService 还有一个特点，就是多次调用 onHandleIntent 函数（也就是有多个耗时任务要执行），多个耗时任务会按顺序依次执行。原理是其内置的 Handler 关联了任务队列，Handler 通过 looper 取任务执行是顺序执行的。</p>
+<p>这个特点就能解决多个耗时任务需要顺序依次执行的问题。而如果仅用 Service，开多个线程去执行耗时操作，就很难管理。</p>
+<h2 id="3、Broadcast-Receive"><a href="#3、Broadcast-Receive" class="headerlink" title="3、Broadcast Receive"></a>3、Broadcast Receive</h2><p>在 Android 中，广播是一种广泛运用的在应用程序之间传输信息的机制。而广播接收器是对发送出来的广播进行过滤接受并响应的一类组件。可以使用广播接收器来让应用对一个外部事件做出响应。例如，当电话呼入这个外部事件到来时，可以利用广播接收器进行处理。</p>
+<p>广播接收器既可以在 <code>AndroidManifest.xml</code> 中注册（静态注册），也可以在运行时的代码中使用 <code>Context.registerReceive()</code>（动态注册）进行注册。<strong>只要是注册了，当事件来临时，即使程序没有启动，系统也在需要的时候启动程序。</strong></p>
+<p>各种应用还可以通过使用 Context.sendBroadcast() 将它们自己的 Intent 广播给其他应用程序。</p>
+<p>应用可以使用它对外部事件进行过滤，只对感兴趣的外部事件(如当电话呼入时，或者数据网络可用时)进行接收并做出响应。<strong>Broadcast Receive 没有用户界面</strong>。然而，它们可以启动一个 Activity 或 Serice 来响应它们收到的信息，或者用 NotificationManager 来通知用户。通知可以用很多种方式来吸引用户的注意力，例如闪动背灯、震动、播放声音等。一般来说是在状态栏上放一个持久的图标，用户可以打开它并获取消息。</p>
+<p>动态注册的特点是当用来注册的 Activity 关掉后，广播也就失效了。静态注册无需担忧 Broadcast Receive  是否被关闭，只要设备是开启状态，广播接收器也是打开着的。也就是说哪怕 app 本身未启动，该 app 订阅的广播在触发时也会对它起作用。</p>
+<h2 id="4、Content-Provider"><a href="#4、Content-Provider" class="headerlink" title="4、Content Provider"></a>4、Content Provider</h2><p>Android 平台提供了 Content Provider 使一个应用程序的指定数据集提供给其他应用程序。其他应用可以通过 ContentResolver 类从该内容提供者中获取或存入数据。</p>
+<p><strong>只有需要在多个应用程序间共享数据是才需要 Content Provider</strong>。例如，通讯录数据被多个应用程序使用，且必须存储在一个内容提供者中。它的好处是统一数据访问方式。</p>
+<p>ContentProvider 实现数据共享。ContentProvider 用于保存和获取数据，并使其对所有应用程序可见。<strong>这是不同应用程序间共享数据的唯一方式</strong>，因为 Android 没有提供所有应用共同访问的公共存储区。</p>
+<p>开发人员不会直接使用 ContentProvider 类的对象，大多数是通过 ContentResolver 对象实现对 ContentProvider 的操作。</p>
+<p>ContentProvider 使用 URI 来唯一标识其数据集，这里的 URI 以 <code>content://</code> 作为前缀，表示该数据由 ContentProvider 来管理。</p>
+<h1 id="Android-其他"><a href="#Android-其他" class="headerlink" title="Android 其他"></a>Android 其他</h1><p>Android 中的任务（Activity 栈）</p>
+<p>任务其实就是 Activity 的栈，它由一个或多个 Activity 组成，共同完成一个完整的用户体验。栈底的是启动整个任务的 Activity，栈顶的是当前运行的用户可以交互的 Activity，当一个 Activity 启动另外一个的时候，新的 Activity 就被压入栈，并成为当前运行的 Activity。而前一个 Activity 仍保持在栈之中。当用户按下 <code>BACK</code> 键的时候，当前 Activity 出栈，而前一个恢复为当前运行的 Activity 。栈中保存的其实是对象，栈中的 Activity 永远不会重排，只会压入或弹出。</p>
+<p>任务中的所有 Activity 是作为一个整体进行移动的。整个的任务（即 Activity 栈）可以移到前台，或退至后台。</p>
+<p><strong>Android 系统是一个多任务 (Multi-Task) 的操作系统</strong>，可以在用手机听音乐的同时，也执行其他多个程序。<strong>每多执行一个应用程序，就会多耗费一些系统内存(开辟了一个新栈)</strong>，当同时执行的程序过多，或是关闭的程序没有正确释放掉内存，系统就会觉得越来越慢，甚至不稳定。为了解决这个问题，Android 引入了一个新的机制，即生命周期(Life Cycle)。</p>
+<h1 id="Android-清单文件"><a href="#Android-清单文件" class="headerlink" title="Android 清单文件"></a>Android 清单文件</h1><p>就我查阅到的资料显示，此清单文件是在文件 <code>AndroidManifest.xml</code> 中的一些字段和玩意。</p>
+<h3 id="文件结构"><a href="#文件结构" class="headerlink" title="文件结构"></a>文件结构</h3><p>大概文件是长这个样子：</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">manifest</span> <span class="attr">xmlns:android</span>=<span class="string">&quot;http://schemas.android.com/apk/res/android&quot;</span></span></span><br><span class="line"><span class="tag"><span class="attr">package</span>=<span class="string">&quot;string&quot;</span></span></span><br><span class="line"><span class="tag"><span class="attr">android:sharedUserId</span>=<span class="string">&quot;string&quot;</span></span></span><br><span class="line"><span class="tag"><span class="attr">android:sharedUserLabel</span>=<span class="string">&quot;string resource&quot;</span></span></span><br><span class="line"><span class="tag"><span class="attr">android:versionCode</span>=<span class="string">&quot;integer&quot;</span></span></span><br><span class="line"><span class="tag"><span class="attr">android:versionName</span>=<span class="string">&quot;string&quot;</span></span></span><br><span class="line"><span class="tag"><span class="attr">android:installLocation</span>=<span class="string">[</span>&quot;<span class="attr">auto</span>&quot;|&quot;<span class="attr">internalOnly</span>&quot;|&quot;<span class="attr">preferExternal</span>&quot;]&gt;</span></span><br><span class="line">.............</span><br><span class="line"><span class="tag">&lt;/<span class="name">manifest</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<h3 id="参数说明"><a href="#参数说明" class="headerlink" title="参数说明"></a>参数说明</h3><p><code>xmlns</code> 和 <code>package</code> 是必须填写的值，而其余字典均是可选字段。</p>
+<h4 id="1-xmlns-android-属性——定义命名空间"><a href="#1-xmlns-android-属性——定义命名空间" class="headerlink" title="1.xmlns:android 属性——定义命名空间"></a>1.xmlns:android 属性——定义命名空间</h4><p>我个人的理解是，这句代码是定义了一个自定义变量，名字就是冒号后面的 <code>android</code>。 而此变量要与后面的链接地址指向的包相关联。</p>
+<p>格式如下：</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">xmlns:&lt;命名空间标识&gt;=&quot;http://schemas.android.com/apk/res/&lt;完整的包名&gt;&quot;</span><br></pre></td></tr></table></figure>
+<p><code>xmlns</code>：命名空间属性</p>
+<p><code>android</code>：标识</p>
+<p><code>“http://schemas.android.com/apk/res/&lt;完整的包名&gt;”</code>：命名空间的 URL</p>
+<p><code>http://schemas.android.com/apk/res/</code>：固定前缀</p>
+<p><code>&lt;完整的包名&gt;</code>：资源所在包名</p>
+<p>一旦标识的名字被我们确定了，后面的 sharedUserId , versionCode ,等等前面的冒号前面的名字都需要统一改变，不然其无法认识。</p>
+<h4 id="2-package-属性——应用程序的身份证"><a href="#2-package-属性——应用程序的身份证" class="headerlink" title="2.package 属性——应用程序的身份证"></a>2.package 属性——应用程序的身份证</h4><p>package 属性唯一标识了一个应用程序。注意，<strong>它是唯一的！</strong>同样，它也是应用程序进程的默认名字以及应用程序中每个 Activity 的默认任务(taskAffinity)。</p>
+<p>当我们生产一个 java 目录下的文件后，Android Studio 会自动根据其中的 package 名字来命名这个文件。</p>
+<p>运行程序，此时 Android 设备就会为这个应用启动一个名字为 package 的进程。</p>
+<h4 id="3-android-sharedUserId-属性——共享数据"><a href="#3-android-sharedUserId-属性——共享数据" class="headerlink" title="3.android:sharedUserId 属性——共享数据"></a>3.android:sharedUserId 属性——共享数据</h4><p>该属性定义了需要和其他应用程序共享的 Linux 用户 ID， 默认情况下，Android系统为每一个应用程序分配一个唯一的用户ID。（这里我的理解是，Android 本身就是一个 Linux 的系统，所以它通过这个 Linux 的用户 id 来进行用户权限的设定和共享，从而实现了应用程序之间的共享。）当这个属性在多个应用程序中被设置为相同值的时候，它们将共享一个用户ID。这样做的好处是，它们之间可以相互访问彼此的数据，如有需要，它们还将在相同的进程中运行。</p>
+<p>与 android:sharedUserId 属性相关的属性还有 android:sharedUserLabel，这个属性给共享的用户ID定义了一个用户可读的标签。这个标签必须用字符串资源来设置，不能使用原生的字符串。这个属性在 API  LEVEL3中引用，只有设置了 sharedUserId 属性时才有意义。</p>
+<h4 id="4-android-versionCode-属性——内部版本号"><a href="#4-android-versionCode-属性——内部版本号" class="headerlink" title="4.android:versionCode 属性——内部版本号"></a>4.android:versionCode 属性——内部版本号</h4><p>android:versionCode 属性的值是一个内部版本号，用于确定这个版本是否比另一个版本更新，数字越大表明它就越新。它不是显示给用户看的版本号，而是由 versionName 属性设置的号码。版本号将决定一些服务的行为，比如替换应用程序时是否执行备份还原操作等。</p>
+<p>该号码必须设为整数，如100。此外，我们可以随心所欲地定义这个整数，只要每个继任的版本能有一个更大的数字即可。</p>
+<h4 id="5-android-versionName-属性——显示给用户的版本号"><a href="#5-android-versionName-属性——显示给用户的版本号" class="headerlink" title="5.android:versionName 属性——显示给用户的版本号"></a>5.android:versionName 属性——显示给用户的版本号</h4><p>android:versionName 属性的值是显示给用户的版本号，它可以被设置为一个原始字符串或者一个字符串资源的引用。这个字符串除了要显示给用户外，没有其他的目的。</p>
+<h4 id="6-android-installLocation-属性——安装位置"><a href="#6-android-installLocation-属性——安装位置" class="headerlink" title="6.android:installLocation 属性——安装位置"></a>6.android:installLocation 属性——安装位置</h4><p>该属性定义了应用程序默认的安装位置，共有3个可选值，其形式如下：</p>
+<blockquote>
+<p>android:installLocation=[“auto”|”internalOnly”|”preferExternal”]</p>
+</blockquote>
+<p>下表说明三个参数各自的意义。</p>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>值</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>auto</td>
+<td>应用程序可能被安装到外部存储设备中，但默认情况下系统将会把应用程序安装到内部存储设备中。如果内存不足，那么系统将会把应用程序安装到外部存储设备中。</td>
+</tr>
+<tr>
+<td>internalOnly</td>
+<td>应用程序必须安装到设备的内部存储设备中。如果设置了这个值，那意味着应用程序将永远不会安装到外部存储设备中去。如果内存不足，那么系统将不会安装这个APK。在没有设置 android:installLocation 属性的情况下，internalOnly 是该属性的默认值。</td>
+</tr>
+<tr>
+<td>preferExternal</td>
+<td>应用程序将会被安装到外部存储设备中，如果系统不支持外部存储设备或者外部设备已满，那么系统将会把这个应用程序安装到内部存储设备中。</td>
+</tr>
+</tbody>
+</table>
+</div>
+<h1 id="Android-res、raw-和-assets-的区别和使用"><a href="#Android-res、raw-和-assets-的区别和使用" class="headerlink" title="Android res、raw 和 assets 的区别和使用"></a>Android res、raw 和 assets 的区别和使用</h1><p>各目录文件存放的文件</p>
+<p><strong>assets</strong>:用于存放需要打包到应用程序的静态文件，以便部署到设备中。与 res/raw 不同点在于，ASSETS支持任意深度的子目录。这些文件不会生成任何资源ID，必须使用 /assets 开始（不包含它）的相对路径名。拥有更高的自由度，尽量不受 Android 平台的限制。<strong>这个目录中的文件除了不会被编译成二进制形式之外，另外一点就是，访问方式是通过文件名，而不是资源ID。</strong></p>
+<p><strong>res</strong>:用于存放应用程序的资源（如图标、GUI布局等），将被打包到编译后的Java中。不支持深度子目录</p>
+<p><strong>res/menu</strong>:存放基于 XML 的菜单描述；</p>
+<p><strong>res/raw</strong>:存放通用的文件， 该文件夹内的文件将不会被编译成二进制文件，按原样复制到设备上。</p>
+<p><strong>res/values</strong>:存放字符串、尺寸值。</p>
+<p><strong>res/xml</strong>: 存放通用的 XML 文件。</p>
+<h1 id="Android-主题"><a href="#Android-主题" class="headerlink" title="Android 主题"></a>Android 主题</h1><p>有两种方法可以改变 app 的外观。</p>
+<p>第一种就是直接在 xml 中直接修改 View 的属性。这种方法只适合于只有几个 View 和 Activity 的简单 app。</p>
+<p>第二种方法就是创建自定义的样式和主题。</p>
+<p>对应 web 开发，第一种方法类似于使用内联的 CSS 样式，而第二种类似于使用 style sheets。</p>
+<p>style 和 theme：是一个包含一种 或者 多种格式化 属性 的集合  ，并且 style 和 theme 都是资源，存放在res/values 文件夹下 </p>
+<p>style：View 级别的，只能在某个 Activity 的布局文件中使用<br>Theme：应用级别的，你必须在 AndroidManifest.xml 中 的 \<application> 或者 \<activity> 中使用</p>
+<p>如何创建自定义的样式和主题和如何使用Android Studio的工具和快捷方式来加快样式的创建 请继续查阅文章： <a target="_blank" rel="noopener" href="http://www.jcodecraeer.com/a/basictutorial/2016/0812/6533.html">Android从零开始：创建样式和主题</a>。</p>
+<h1 id="Android-的-Intent-使用方法"><a href="#Android-的-Intent-使用方法" class="headerlink" title="Android 的 Intent 使用方法"></a>Android 的 Intent 使用方法</h1><h2 id="1、Intent"><a href="#1、Intent" class="headerlink" title="1、Intent"></a>1、Intent</h2><h3 id="Intent-的概念："><a href="#Intent-的概念：" class="headerlink" title="Intent 的概念："></a>Intent 的概念：</h3><p>Android 中提供了 Intent 机制来协助应用间的交互与通讯，或者采用更准确的说法是，Intent 不仅可用于应用程序之间，也可用于应用程序内部的 activity,  service 和 broadcast receiver 之间的交互。Intent 这个英语单词的本意是“目的、意向、意图”。</p>
+<p>Intent 是一种运行时绑定（runtime binding) 机制，它能在程序运行的过程中连接两个不同的组件。通过 Intent，你的程序可以向 Android 表达某种请求或者意愿， Android 会根据意愿的内容选择适当的组件来响应。</p>
+<p>四大组件中，Activity、Service 和 Broadcast Receiver 之间是通过 Intent 进行通信的，而另外一个组件 Content Provider 本身就是一种通信机制，不需要通过 Intent。</p>
+<h3 id="Intent-用法和机制"><a href="#Intent-用法和机制" class="headerlink" title="Intent 用法和机制"></a>Intent 用法和机制</h3><p>Intent 的两种基本用法：一种是显式的 Intent，即在构造 Intent 对象时就指定接收者，这种方式与普通的函数调用类似；另一种是隐式的 Intent，即 Intent 的发送者在构造 Intent 对象时，并不知道接收者是谁，只是指出接收者的一些特性（比如说启动音乐播放软件）。官方建议使用隐式Intent。</p>
+<p>三种不同组件中发送时有不同的机制：</p>
+<ul>
+<li>使用 <code>Context.startActivity()</code> 或  <code>Activity.startActivityForResult()</code> ，传入一个 Intent 来启动一个 Activity。使用 <code>Activity.setResult()</code> ，传入一个 Intent 来从 Activity 中返回结果；</li>
+<li>将 Intent 对象传给 <code>Context.startService()</code> 来启动一个 Service 或者传消息给一个运行的 Service, 将 Intent 对象传给 <code>Context.bindService()</code> 来绑定一个 Service；</li>
+<li>将 Intent 对象传给<code>Context.sendBroadcast()</code> ，<code>Context.sendOrderedBroadcast()</code> ，或者<code>Context.sendStickyBroadcast()</code> 等广播方法，则它们被传给 Broadcast Receiver。</li>
+</ul>
+<h2 id="2、Intent-相关属性"><a href="#2、Intent-相关属性" class="headerlink" title="2、Intent 相关属性"></a>2、Intent 相关属性</h2><p>Intent由以下各个组成部分：</p>
+<ul>
+<li>Component(组件)：目的组件</li>
+<li>Action（动作）：用来表现意图的行动</li>
+<li>Category（类别）：用来表现动作的类别</li>
+<li>Data（数据）：表示与动作要操纵的数据</li>
+<li>Type（数据类型）：对于data范例的描写</li>
+<li>Extras（扩展信息）：扩展信息</li>
+<li>Flags（标志位）：期望这个意图的运行模式</li>
+</ul>
+<p>上述属性中，Component 属性为直接类型，其他均为间接类型。</p>
+<p>相比与显式 Intent，隐式 Intnet 则含蓄了许多，它并不明确指出我们想要启动哪一个活动，而是指定一系列更为抽象的 Action 和 Category 等信息，然后交由系统去分析这个 Intent，并帮我们找出合适的活动去启动。</p>
+<p>Activity 中 Intent Filter 的匹配过程 ：</p>
+<p><code>加载安装所有的 Intent Filter 到一个列表中</code> → <code>剔除 Action 匹配缺失的 Intent Filter</code> → <code>剔除 URI 数据匹配失败的 Intent Filter</code> → <code>剔除 Category 匹配失败的 Intent Filter</code> → <code>余下的 Intent Filter 数量是否为 0</code> ＜<code>是，则返回优先级最高的 Intent Filter</code>， <code>否，则抛出查找异常</code> 。</p>
+<h3 id="1、Component-组件-：目的组件"><a href="#1、Component-组件-：目的组件" class="headerlink" title="1、Component (组件)：目的组件"></a>1、Component (组件)：目的组件</h3><p>Component 属性明确指定 Intent 的目标组件的类名称。（属于直接 Intent）</p>
+<p>如果 Component 这个属性有指定的话，将直接使用它指定的组件。指定了这个属性以后，Intent 的其它所有属性都是可选的。</p>
+<p>例如，启动第二个 Activity 时，我们可以这样来写：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">button1.setOnClickListener(<span class="keyword">new</span> OnClickListener() &#123;            </span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onClick</span><span class="params">(View v)</span> </span>&#123;</span><br><span class="line">        <span class="comment">//创建一个意图对象</span></span><br><span class="line">        Intent intent = <span class="keyword">new</span> Intent();</span><br><span class="line">        <span class="comment">//创建组件，通过组件来响应</span></span><br><span class="line">        ComponentName component = <span class="keyword">new</span> ComponentName(MainActivity.<span class="keyword">this</span>, SecondActivity.class);</span><br><span class="line">        intent.setComponent(component);                </span><br><span class="line">        startActivity(intent);                </span><br><span class="line">    &#125;</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<p>如果写的简单一点，监听事件 <code>onClick()</code>方法里可以这样写：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">button1.setOnClickListener(<span class="keyword">new</span> OnClickListener() &#123;            </span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onClick</span><span class="params">(View v)</span> </span>&#123;    </span><br><span class="line">        Intent intent = <span class="keyword">new</span> Intent();</span><br><span class="line">        <span class="comment">//setClass函数的第一个参数是一个Context对象</span></span><br><span class="line">        <span class="comment">//Context是一个类，Activity是Context类的子类，也就是说，所有的Activity对象，都可以向上转型为Context对象</span></span><br><span class="line">        <span class="comment">//setClass函数的第二个参数是一个Class对象，在当前场景下，应该传入需要被启动的Activity类的class对象</span></span><br><span class="line">        intent.setClass(MainActivity.<span class="keyword">this</span>, SecondActivity.class);</span><br><span class="line">        startActivity(intent)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<p>再简单一点，可以这样写：（当然，也是最常见的写法）</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">button1.setOnClickListener(<span class="keyword">new</span> OnClickListener() &#123;            </span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onClick</span><span class="params">(View v)</span> </span>&#123;</span><br><span class="line">        Intent intent = <span class="keyword">new</span> Intent(MainActivity.<span class="keyword">this</span>,SecondActivity.class);</span><br><span class="line">        startActivity(intent);       </span><br><span class="line">    &#125;</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<h3 id="2、Action（动作）：用来表现意图的行动"><a href="#2、Action（动作）：用来表现意图的行动" class="headerlink" title="2、Action（动作）：用来表现意图的行动"></a>2、Action（动作）：用来表现意图的行动</h3><p>当日常生活中，描述一个意愿或愿望的时候，总是有一个动词在其中。比如：我想“做”三个俯卧撑；我要“写” 一封情书，等等。在 Intent 中，Action 就是描述做、写等动作的，当你指明了一个 Action，执行者就会依照这个动作的指示，接受相关输入，表现对应行为，产生符合的输出。在 Intent 类中，定义了一批量的动作，比如 <code>ACTION_VIEW</code>，<code>ACTION_PICK</code> 等， 基本涵盖了常用动作。加的动作越多，越精确。</p>
+<p>Action 是一个用户定义的字符串，用于描述一个 Android 应用程序组件，一个 Intent Filter 可以包含多个 Action。在 <code>AndroidManifest.xml</code> 的 Activity 定义时，可以在其 <code>&lt;intent-filter &gt;</code> 节点指定一个 Action 列表用于标识 Activity 所能接受的“动作”。</p>
+<h3 id="3、Category（类别）：用来表现动作的类别"><a href="#3、Category（类别）：用来表现动作的类别" class="headerlink" title="3、Category（类别）：用来表现动作的类别"></a>3、Category（类别）：用来表现动作的类别</h3><p>Category 属性也是作为<code>&lt;intent-filter&gt;</code> 子元素来声明的。例如：</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">intent-filter</span>&gt;</span></span><br><span class="line">　　<span class="tag">&lt;<span class="name">action</span> <span class="attr">android:name</span>=<span class="string">&quot;com.vince.intent.MY_ACTION&quot;</span>&gt;</span><span class="tag">&lt;/<span class="name">action</span>&gt;</span></span><br><span class="line">　　<span class="tag">&lt;<span class="name">category</span> <span class="attr">android:name</span>=<span class="string">&quot;com.vince.intent.MY_CATEGORY&quot;</span>&gt;</span><span class="tag">&lt;/<span class="name">category</span>&gt;</span> </span><br><span class="line">　　<span class="tag">&lt;<span class="name">category</span> <span class="attr">android:name</span>=<span class="string">&quot;android.intent.category.DEFAULT&quot;</span>&gt;</span><span class="tag">&lt;/<span class="name">category</span>&gt;</span> </span><br><span class="line"><span class="tag">&lt;/<span class="name">intent-filter</span>&gt;</span> </span><br></pre></td></tr></table></figure>
+<p>Action 和 Category 通常是放在一起用的，所以这里一起介绍一下。我们来先来举一个例子：</p>
+<p>新建一个工程文件 smyh006_Intent01，在默认文件的基础之上，新建文件 SecondActicity.java 和 activity_second.xml。</p>
+<p>紧接着，我们要到清单文件中进行注册，打开 <code>AndroidManifest.xml</code>，添加 SecondActivity 的 Action 和 Category 的过滤器：</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">activity</span> <span class="attr">android:name</span>=<span class="string">&quot;.SecondActivity&quot;</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">intent-filter</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">action</span> <span class="attr">android:name</span>=<span class="string">&quot;com.example.smyh006intent01.MY_ACTION&quot;</span>/&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">category</span> <span class="attr">android:name</span>=<span class="string">&quot;android.intent.category.DEFAULT&quot;</span> /&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">intent-filter</span>&gt;</span>            </span><br><span class="line"><span class="tag">&lt;/<span class="name">activity</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<p>上方代码，表示 SecondActicity 可以匹配第4行的 MY_ACTION 这个动作，此时，如果在其他的 Acticity 通过这个 Action 的条件来查找，那 SecondActicity 就具备了这个条件。类似于相亲时，我要求对方有哪些条件，然后对方这个 SecondActicity 恰巧满足了这个条件（够通俗了吧）。</p>
+<p>注：如果没有指定的 Category，则必须使用默认的 DEFAULT（即上方第5行代码）。</p>
+<p><strong>也就是说：只有 <code>&lt;action&gt;</code> 和 <code>&lt;category&gt;</code> 中的内容同时能够匹配上 Intent 中指定的 Action 和 Category 时，这个活动才能响应 Intent。如果使用的是 DEFAULT 这种默认的 Category，在稍后调用 <code>startActivity()</code> 方法的时候会自动将这个 Category 添加到 Intent 中。</strong></p>
+<p>现在来修改 MainActivity.java 中按钮的点击事件，代码如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">button1.setOnClickListener(<span class="keyword">new</span> OnClickListener() &#123;            </span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onClick</span><span class="params">(View v)</span> </span>&#123;</span><br><span class="line">        <span class="comment">//启动另一个Activity，（通过action属性进行查找）</span></span><br><span class="line">        Intent intent = <span class="keyword">new</span> Intent();</span><br><span class="line">        <span class="comment">//设置动作（实际action属性就是一个字符串标记而已）</span></span><br><span class="line">        intent.setAction(<span class="string">&quot;com.example.smyh006intent01.MY_ACTION&quot;</span>); <span class="comment">//方法：Intent android.content.Intent.setAction(String action)</span></span><br><span class="line">        startActivity(intent);        </span><br><span class="line">    &#125;</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<p>上方代码中，也可以换成下面这种简洁的方式：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">button1.setOnClickListener(<span class="keyword">new</span> OnClickListener() &#123;            </span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onClick</span><span class="params">(View v)</span> </span>&#123;</span><br><span class="line">        <span class="comment">//启动另一个Activity，（通过action属性进行查找）</span></span><br><span class="line">        Intent intent = <span class="keyword">new</span> Intent(<span class="string">&quot;com.example.smyh006intent01.MY_ACTION&quot;</span>);<span class="comment">//方法： android.content.Intent.Intent(String action)                </span></span><br><span class="line">        startActivity(intent);        </span><br><span class="line">    &#125;</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<p>上方第5行代码：在这个 Intent 中，并没有指定具体哪一个 Activity，只是指定了一个 Action 的常量。所以说，隐式 Intent 的作用就表现的淋漓尽致了。此时，点击 MainActicity 中的按钮，就会跳到 SecondActicity 中去。</p>
+<p>上述情况只有 SecondActicity 匹配成功。如果有多个组件匹配成功，就会以对话框列表的方式让用户进行选择。我们来详细介绍一下：</p>
+<p>我们新建文件 ThirdActicity.java 和 activity_third.xml，然后在清单文件 <code>AndroidManifest.xml</code> 中添加ThirdActivity 的 Action 和 Category 的过滤器：</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">activity</span> <span class="attr">android:name</span>=<span class="string">&quot;.ThirdActivity&quot;</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">intent-filter</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">action</span> <span class="attr">android:name</span>=<span class="string">&quot;com.example.smyh006intent01.MY_ACTION&quot;</span>/&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">category</span> <span class="attr">android:name</span>=<span class="string">&quot;android.intent.category.DEFAULT&quot;</span> /&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">intent-filter</span>&gt;</span>            </span><br><span class="line"><span class="tag">&lt;/<span class="name">activity</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<p>此时，运行程序，当点击 MainActivity 中的按钮时，弹出一个选择应用的界面。</p>
+<p>相信大家看到了这个界面，应该就一目了然了。于是我们可以做出如下总结：</p>
+<p>在自定义动作时，使用 Activity 组件时，必须添加一个默认的类别</p>
+<p>具体的实现为：</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">intent-filter</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">action</span> <span class="attr">android:name</span>=<span class="string">&quot;com.example.action.MY_ACTION&quot;</span>/&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">category</span> <span class="attr">android:name</span>=<span class="string">&quot;android.intent.category.DEFAULT&quot;</span>/&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">intent-filter</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<p>如果有多个组件被匹配成功，就会以对话框列表的方式让用户进行选择。</p>
+<p>每个 Intent 中只能指定一个 Action，但却能指定多个 Category；类别越多，动作越具体，意图越明确（类似于相亲时，给对方提了很多要求）。</p>
+<p>目前我们的 Intent 中只有一个默认的 Category，现在可以通过 <code>intent.addCategory()</code> 方法来实现。修改MainActivity 中按钮的点击事件，代码如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">button1.setOnClickListener(<span class="keyword">new</span> OnClickListener() &#123;            </span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onClick</span><span class="params">(View v)</span> </span>&#123;</span><br><span class="line">        <span class="comment">//启动另一个Activity，（通过action属性进行查找）</span></span><br><span class="line">        Intent intent = <span class="keyword">new</span> Intent();</span><br><span class="line">        <span class="comment">//设置动作（实际action属性就是一个字符串标记而已）</span></span><br><span class="line">        intent.setAction(<span class="string">&quot;com.example.smyh006intent01.MY_ACTION&quot;</span>); <span class="comment">//方法：Intent android.content.Intent.setAction(String action)</span></span><br><span class="line">        intent.addCategory(<span class="string">&quot;com.example.smyh006intent01.MY_CATEGORY&quot;</span>);</span><br><span class="line">        startActivity(intent);        </span><br><span class="line">    &#125;</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<p>既然在Intent中增加了一个 Category，那么我们要在清单文件中去声明这个 Category，不然程序将无法运行。代码如下：</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">activity</span> <span class="attr">android:name</span>=<span class="string">&quot;.SecondActivity&quot;</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">intent-filter</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">action</span> <span class="attr">android:name</span>=<span class="string">&quot;com.example.smyh006intent01.MY_ACTION&quot;</span>/&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">category</span> <span class="attr">android:name</span>=<span class="string">&quot;android.intent.category.DEFAULT&quot;</span> /&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">category</span> <span class="attr">android:name</span>=<span class="string">&quot;com.example.smyh006intent01.MY_CATEGORY&quot;</span> /&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">intent-filter</span>&gt;</span>            </span><br><span class="line"><span class="tag">&lt;/<span class="name">activity</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<h3 id="4、Data（数据）：表示与动作要操纵的数据"><a href="#4、Data（数据）：表示与动作要操纵的数据" class="headerlink" title="4、Data（数据）：表示与动作要操纵的数据"></a>4、Data（数据）：表示与动作要操纵的数据</h3><ul>
+<li>Data 属性是 Android 要访问的数据，和 Action 和 Category 声明方式相同，也是在清单文件中。</li>
+<li>多个组件匹配成功显示优先级高的； 相同显示列表。</li>
+</ul>
+<p>Data 是用一个 uri 对象来表示的，uri 代表数据的地址，属于一种标识符。通常情况下，我们使用Action+Data 属性的组合来描述一个意图：做什么。</p>
+<p><strong>使用隐式 Intent，我们不仅可以启动自己程序内的活动，还可以启动其他程序的活动，这使得 Android 多个应用程序之间的功能共享成为了可能。</strong>比如应用程序中需要展示一个网页，没有必要自己去实现一个浏览器（事实上也不太可能），而是只需要调用系统的浏览器来打开这个网页就行了。</p>
+<p>【实例】打开指定网页：</p>
+<p>MainActivity.java中，监听器部分的核心代码如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">button1.setOnClickListener(<span class="keyword">new</span> OnClickListener() &#123;            </span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onClick</span><span class="params">(View v)</span> </span>&#123;</span><br><span class="line">        Intent intent = <span class="keyword">new</span> Intent();</span><br><span class="line">        intent.setAction(Intent.ACTION_VIEW);</span><br><span class="line">        Uri data = Uri.parse(<span class="string">&quot;http://www.baidu.com&quot;</span>);</span><br><span class="line">        intent.setData(data);                </span><br><span class="line">        startActivity(intent);        </span><br><span class="line">    &#125;</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<p>当然，上方代码也可以简写成：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">button1.setOnClickListener(<span class="keyword">new</span> OnClickListener() &#123;            </span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onClick</span><span class="params">(View v)</span> </span>&#123;</span><br><span class="line">        Intent intent = <span class="keyword">new</span> Intent(Intent.ACTION_VIEW);</span><br><span class="line">        intent.setData(Uri.parse(<span class="string">&quot;http://www.baidu.com&quot;</span>));                </span><br><span class="line">        startActivity(intent);        </span><br><span class="line">    &#125;</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<p>第4行代码：指定了 Intent 的 Action 是 <strong>Intent.ACTION_VIEW</strong>，表示查看的意思，这是一个 Android 系统内置的动作；</p>
+<p>第5行代码：通过 <code>Uri.parse()</code> 方法，将一个网址字符串解析成一个 Uri 对象，再调用 Intent 的 <code>setData()</code> 方法将这个 Uri 对象传递进去。</p>
+<p>当点击按钮时，将跳到浏览器打开百度的页面。</p>
+<p>此时， 调用的是系统默认的浏览器，也就是说，只调用了这一个组件。现在如果有多个组件得到了匹配，应该是什么情况呢？</p>
+<p>我们修改修改清单文件中对SecondAcivity的声明：</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">activity</span> </span></span><br><span class="line"><span class="tag">     <span class="attr">android:name</span>=<span class="string">&quot;.SecondActivity&quot;</span>&gt;</span></span><br><span class="line">     <span class="tag">&lt;<span class="name">intent-filter</span>&gt;</span></span><br><span class="line">          <span class="tag">&lt;<span class="name">action</span> <span class="attr">android:name</span>=<span class="string">&quot;android.intent.action.VIEW&quot;</span> /&gt;</span></span><br><span class="line">          <span class="tag">&lt;<span class="name">category</span> <span class="attr">android:name</span>=<span class="string">&quot;android.intent.category.DEFAULT&quot;</span> /&gt;</span></span><br><span class="line">          <span class="tag">&lt;<span class="name">data</span> <span class="attr">android:scheme</span>=<span class="string">&quot;http&quot;</span> <span class="attr">android:host</span>=<span class="string">&quot;www.baidu.com&quot;</span>/&gt;</span>                 </span><br><span class="line">     <span class="tag">&lt;/<span class="name">intent-filter</span>&gt;</span>            </span><br><span class="line"> <span class="tag">&lt;/<span class="name">activity</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<p>现在，SecondActivity 也匹配成功了，我们运行程序，点击 MainActicity 的按钮时，弹出选择浏览器的界面供我们选择。</p>
+<p>我们可以总结如下：</p>
+<ul>
+<li>当 Intent 匹配成功的组件有多个时，显示优先级高的组件，如果优先级相同，显示列表让用户自己选择</li>
+<li>优先级从-1000至1000，并且其中一个必须为负的才有效</li>
+</ul>
+<p>注：系统默认的浏览器并没有做出优先级声明，其优先级默认为正数。</p>
+<p>优先级的配置如下：</p>
+<p>在清单文件中修改对 SecondAcivity 的声明，即增加一行代码，通过来 android:priority 设置优先级，如下：</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">activity</span> </span></span><br><span class="line"><span class="tag">    <span class="attr">android:name</span>=<span class="string">&quot;.SecondActivity&quot;</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">intent-filter</span> <span class="attr">android:priority</span>=<span class="string">&quot;-1&quot;</span>&gt;</span></span><br><span class="line">         <span class="tag">&lt;<span class="name">action</span> <span class="attr">android:name</span>=<span class="string">&quot;android.intent.action.VIEW&quot;</span> /&gt;</span></span><br><span class="line">         <span class="tag">&lt;<span class="name">category</span> <span class="attr">android:name</span>=<span class="string">&quot;android.intent.category.DEFAULT&quot;</span> /&gt;</span></span><br><span class="line">         <span class="tag">&lt;<span class="name">data</span> <span class="attr">android:scheme</span>=<span class="string">&quot;http&quot;</span> <span class="attr">android:host</span>=<span class="string">&quot;www.baidu.com&quot;</span>/&gt;</span>                          </span><br><span class="line">    <span class="tag">&lt;/<span class="name">intent-filter</span>&gt;</span>            </span><br><span class="line"><span class="tag">&lt;/<span class="name">activity</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<p>Data 属性的声明中要指定访问数据的 Uri 和 MIME 类型。可以在元素中通过一些属性来设置：</p>
+<p>android:scheme、android:path、android:port、android:mimeType、android:host 等，通过这些属性来对应一个典型的 Uri 格式 scheme://host:port/path。例如：<a target="_blank" rel="noopener" href="http://www.google.com/">http://www.google.com</a>。</p>
+<h3 id="5、type（数据类型）：对于data范例的描写"><a href="#5、type（数据类型）：对于data范例的描写" class="headerlink" title="5、type（数据类型）：对于data范例的描写"></a>5、type（数据类型）：对于data范例的描写</h3><p>如果 Intent 对象中既包含 Uri 又包含 Type，那么，在 <code>&lt;intent-filter&gt;</code> 中也必须二者都包含才能通过测试。</p>
+<p>Type 属性用于明确指定 Data 属性的数据类型或 MIME 类型，但是通常来说，当 Intent 不指定 Data 属性时，Type 属性才会起作用，否则 Android 系统将会根据 Data 属性值来分析数据的类型，所以无需指定 Type 属性。</p>
+<p>Data 和 Type 属性一般只需要一个，通过 <code>setData()</code> 方法会把 Type 属性设置为 null，相反设置 <code>setType()</code> 方法会把 Data 设置为 null，如果想要两个属性同时设置，要使用 <code>Intent.setDataAndType()</code> 方法。</p>
+<p>【任务】：Data+Type 属性的使用 【实例】：播放指定路径的mp3文件。</p>
+<p>具体如下：</p>
+<p>新建工程文件 smyh006_Intent02，MainActivity.java 中按钮监听事件部分的代码如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">button.setOnClickListener(<span class="keyword">new</span> OnClickListener()&#123;</span><br><span class="line">	 <span class="meta">@Override</span></span><br><span class="line">	 <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onClick</span><span class="params">(View v)</span> </span>&#123;</span><br><span class="line">	     Intent intent = <span class="keyword">new</span> Intent();</span><br><span class="line">	     intent.setAction(Intent.ACTION_VIEW);</span><br><span class="line">	     Uri data = Uri.parse(<span class="string">&quot;file:///storage/sdcard0/平凡之路.mp3&quot;</span>);</span><br><span class="line">	     <span class="comment">//设置data+type属性</span></span><br><span class="line">	     intent.setDataAndType(data, <span class="string">&quot;audio/mp3&quot;</span>); <span class="comment">//方法：Intent android.content.Intent.setDataAndType(Uri data, String type)</span></span><br><span class="line">	     startActivity(intent);                </span><br><span class="line">	 &#125;            </span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<p>第6行：”file://“ 表示查找文件，后面再加上我的小米手机存储卡的路径：<code>/storage/sdcard0</code> ，再加上具体歌曲的路径。</p>
+<p>第8行：设置 Data+Type 属性　</p>
+<p>运行后，当点击按钮时，会显示一个播放音乐的界面，使用小米默认的音乐播放器。</p>
+<h3 id="6、Extras（扩展信息）：扩展信息"><a href="#6、Extras（扩展信息）：扩展信息" class="headerlink" title="6、Extras（扩展信息）：扩展信息"></a>6、Extras（扩展信息）：扩展信息</h3><p>是其它所有附加信息的集合。使用 Extras 可以为组件提供扩展信息，比如，如果要执行“发送电子邮件”这个</p>
+<p>动作，可以将电子邮件的标题、正文等保存在 Extras 里，传给电子邮件发送组件。</p>
+<h3 id="7、Flags（标志位）：期望这个意图的运行模式"><a href="#7、Flags（标志位）：期望这个意图的运行模式" class="headerlink" title="7、Flags（标志位）：期望这个意图的运行模式"></a>7、Flags（标志位）：期望这个意图的运行模式</h3><p>一个程序启动后系统会为这个程序分配一个 task 供其使用，另外同一个 task 里面可以拥有不同应用程序的Activity 。那么，同一个程序能不能拥有多个 task？这就涉及到加载 Activity 的启动模式，这个需要单独讲一下。</p>
+<p>注：Android 中一组逻辑上在一起的 Activity 被叫做 task，自己认为可以理解成一个 Activity 堆栈。</p>
+<h2 id="3、Activity-的启动模式：（面试注意）"><a href="#3、Activity-的启动模式：（面试注意）" class="headerlink" title="3、Activity 的启动模式：（面试注意）"></a>3、Activity 的启动模式：（面试注意）</h2><p>Activity 有四种启动模式：standard、singleTop、singleTask、singleInstance。可以在<code>AndroidManifest.xml</code> 中 Activity 标签的属性 android:launchMode 中设置该 Activity 的加载模式。</p>
+<ul>
+<li>standard 模式：默认的模式，以这种模式加载时，每当启动一个新的活动，必定会构造一个新的 Activity实例放到返回栈（目标task）的栈顶，不管这个 Activity 是否已经存在于返回栈中；</li>
+<li>singleTop 模式：如果一个以 singleTop 模式启动的 Activity 的实例已经存在于返回桟的桟顶，那么再启动这个 Activity 时，不会创建新的实例，而是重用位于栈顶的那个实例，并且会调用该实例的<code>onNewIntent()</code> 方法将 Inten t对象传递到这个实例中；</li>
+</ul>
+<p>注：如果以 singleTop 模式启动的 Activity 的一个实例已经存在于返回桟中，但是不在桟顶，那么它的行为和 standard 模式相同，也会创建多个实例；</p>
+<ul>
+<li>singleTask 模式：这种模式下，每次启动一个 Activity 时，系统首先会在返回栈中检查是否存在该活动的实例，如果存在，则直接使用该实例，并把这个活动之上的所有活动统统清除；如果没有发现就会创建一个新的活动实例；</li>
+<li>singleInstance 模式：总是在新的任务中<strong>（那就是新开一个栈了）</strong>开启，并且这个新的任务中有且只有这一个实例，也就是说被该实例启动的其他 Activity 会自动运行于另一个任务中。当再次启动该 Activity 的实例时，会重新调用已存在的任务和实例。并且会调用这个实例的 <code>onNewIntent()</code> 方法，将 Intent 实例传递到该实例中。和 singleTask 相同，同一时刻在系统中只会存在一个这样的 Activity 实例。(singleInstance 即单实例)</li>
+</ul>
+<p>注：前面三种模式中，每个应用程序都有自己的返回栈，同一个活动在不同的返回栈中入栈时，必然是创建了新的实例。而使用 singleInstance 模式可以解决这个问题，在这种模式下会有一个单独的返回栈来管理这个活动，不管是哪一个应用程序来访问这个活动，都公用同一个返回栈，也就解决了共享活动实例的问题。（此时可以实现任务之间的切换，而不是单独某个栈中的实例切换）<strong>（我没懂，是每个 APP 都启动一个单独的栈吗？还是一堆逻辑相近的 Activity 一起租用一个公用栈？还是都有？）</strong></p>
+<p>其实我们不在清单文件中设置，只在代码中通过flag来设置也是可以的，如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">Intent intent = <span class="keyword">new</span> Intent(MainActivity.<span class="keyword">this</span>,SecondActivity.class);</span><br><span class="line"><span class="comment">//相当于singleTask</span></span><br><span class="line">intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);</span><br><span class="line">startActivity(intent);</span><br></pre></td></tr></table></figure>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">Intent intent = <span class="keyword">new</span> Intent(MainActivity.<span class="keyword">this</span>,SecondActivity.class);</span><br><span class="line"><span class="comment">//相当于singleTop</span></span><br><span class="line">intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);</span><br><span class="line">startActivity(intent);</span><br></pre></td></tr></table></figure>
+<h2 id="更多"><a href="#更多" class="headerlink" title="更多"></a>更多</h2><p>包括 Intent 常见应用等参见 <a target="_blank" rel="noopener" href="https://www.cnblogs.com/zhouheng0918/p/9209327.html">参考博客</a>。</p>
+<h1 id="参考链接"><a href="#参考链接" class="headerlink" title="参考链接"></a>参考链接</h1><p>Android 四大组件参考：<a target="_blank" rel="noopener" href="https://blog.csdn.net/xchaha/article/details/80398620">https://blog.csdn.net/xchaha/article/details/80398620</a></p>
+<p>Android 清单文件参考：<a target="_blank" rel="noopener" href="https://blog.csdn.net/liyuanjinglyj/article/details/46866521">https://blog.csdn.net/liyuanjinglyj/article/details/46866521</a></p>
+<p>res、raw和assets参考：<a target="_blank" rel="noopener" href="https://www.jb51.net/article/77904.htm">https://www.jb51.net/article/77904.htm</a></p>
+<p>Android 主题参考一：<a target="_blank" rel="noopener" href="http://www.jcodecraeer.com/a/basictutorial/2016/0812/6533.html">http://www.jcodecraeer.com/a/basictutorial/2016/0812/6533.html</a></p>
+<p>Android 主题参考二：<a target="_blank" rel="noopener" href="https://blog.csdn.net/geduo_83/article/details/86561559">https://blog.csdn.net/geduo_83/article/details/86561559</a></p>
+<p>Android Intent 用法：<a target="_blank" rel="noopener" href="https://www.cnblogs.com/zhouheng0918/p/9209327.html">https://www.cnblogs.com/zhouheng0918/p/9209327.html</a></p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta">文章作者: </span><span class="post-copyright-info"><a href="mailto:undefined">Ron</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta">文章链接: </span><span class="post-copyright-info"><a href="https://lucxer.tk/2021/03/02/android%20%E6%AD%A3%E5%90%91/">https://lucxer.tk/2021/03/02/android%20%E6%AD%A3%E5%90%91/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta">版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来自 <a href="https://lucxer.tk" target="_blank">Ron's Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/Android/">Android</a></div><div class="post_share"><div class="addthis_inline_share_toolbox"></div><script src="//s7.addthis.com/js/300/addthis_widget.js#pubid=5fb3e45d5f9ff11c" async="async"></script></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i> 打赏<div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="/img/wechat.png" target="_blank"><img class="post-qr-code-img" data-lazy-src="/img/wechat.png" alt="wechat"/></a><div class="post-qr-code-desc">wechat</div></li><li class="reward-item"><a href="/img/alipay.png" target="_blank"><img class="post-qr-code-img" data-lazy-src="/img/alipay.png" alt="alipay"/></a><div class="post-qr-code-desc">alipay</div></li></ul></div></div></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/2021/03/15/frida%E5%AE%89%E8%A3%85%E4%B8%8E%E5%9F%BA%E7%A1%80/"><img class="prev-cover" data-lazy-src="https://cdn.jsdelivr.net/gh/LCX666/picgo-blog/img/frida.png" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="pagination-info"><div class="label">上一篇</div><div class="prev_info">frida 安装与基础</div></div></a></div><div class="next-post pull-right"><a href="/2021/02/01/WSL2+selenium/"><img class="next-cover" data-lazy-src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1/img/default.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">下一篇</div><div class="next_info"></div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span> 相关推荐</span></div><div class="relatedPosts-list"><div><a href="/2021/03/20/ab案例学习/" title=".ad 文件逆向分析"><img class="cover" data-lazy-src="https://cdn.jsdelivr.net/gh/LCX666/picgo-blog/img/ab_android_backup.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2021-03-20</div><div class="title">.ad 文件逆向分析</div></div></a></div><div><a href="/2021/03/15/frida安装与基础/" title="frida 安装与基础"><img class="cover" data-lazy-src="https://cdn.jsdelivr.net/gh/LCX666/picgo-blog/img/frida.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2021-03-15</div><div class="title">frida 安装与基础</div></div></a></div></div></div><hr/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div class="vcomment" id="vcomment"></div></div></div></div></div><div class="aside_content" id="aside_content"><div class="card-widget card-info"><div class="card-content"><div class="card-info-avatar is-center"><img class="avatar-img" data-lazy-src="/img/kid.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/><div class="author-info__name">Ron</div><div class="author-info__description">Old but Lowlevel OIer, Young CTFer</div></div><div class="card-info-data"><div class="card-info-data-item is-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">16</div></a></div><div class="card-info-data-item is-center"><a href="/tags/"><div class="headline">标签</div><div class="length-num">41</div></a></div><div class="card-info-data-item is-center"><a href="/categories/"><div class="headline">分类</div><div class="length-num">6</div></a></div></div><a class="button--animated" id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/LCX666"><i class="fab fa-github"></i><span>Follow Me</span></a><div class="card-info-social-icons is-center"><a class="social-icon" href="https://github.com/LCX666" target="_blank" title="Github"><i class="fab fa-github"></i></a><a class="social-icon" href="mailto:s@lucxer.tk" target="_blank" title="Email"><i class="fas fa-envelope"></i></a></div></div></div><div class="card-widget card-announcement"><div class="card-content"><div class="item-headline"><i class="fas fa-bullhorn card-announcement-animation"></i><span>公告</span></div><div class="announcement_content">号外！号外！号外！评论系统已开放！</div></div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="card-content"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#Android-%E5%9B%9B%E5%A4%A7%E7%BB%84%E4%BB%B6"><span class="toc-number">1.</span> <span class="toc-text">Android 四大组件</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#1%E3%80%81Activity"><span class="toc-number">1.1.</span> <span class="toc-text">1、Activity</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2%E3%80%81Service"><span class="toc-number">1.2.</span> <span class="toc-text">2、Service</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#IntentService"><span class="toc-number">1.2.1.</span> <span class="toc-text">IntentService</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3%E3%80%81Broadcast-Receive"><span class="toc-number">1.3.</span> <span class="toc-text">3、Broadcast Receive</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#4%E3%80%81Content-Provider"><span class="toc-number">1.4.</span> <span class="toc-text">4、Content Provider</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Android-%E5%85%B6%E4%BB%96"><span class="toc-number">2.</span> <span class="toc-text">Android 其他</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Android-%E6%B8%85%E5%8D%95%E6%96%87%E4%BB%B6"><span class="toc-number">3.</span> <span class="toc-text">Android 清单文件</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%96%87%E4%BB%B6%E7%BB%93%E6%9E%84"><span class="toc-number">3.0.1.</span> <span class="toc-text">文件结构</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8F%82%E6%95%B0%E8%AF%B4%E6%98%8E"><span class="toc-number">3.0.2.</span> <span class="toc-text">参数说明</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#1-xmlns-android-%E5%B1%9E%E6%80%A7%E2%80%94%E2%80%94%E5%AE%9A%E4%B9%89%E5%91%BD%E5%90%8D%E7%A9%BA%E9%97%B4"><span class="toc-number">3.0.2.1.</span> <span class="toc-text">1.xmlns:android 属性——定义命名空间</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2-package-%E5%B1%9E%E6%80%A7%E2%80%94%E2%80%94%E5%BA%94%E7%94%A8%E7%A8%8B%E5%BA%8F%E7%9A%84%E8%BA%AB%E4%BB%BD%E8%AF%81"><span class="toc-number">3.0.2.2.</span> <span class="toc-text">2.package 属性——应用程序的身份证</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3-android-sharedUserId-%E5%B1%9E%E6%80%A7%E2%80%94%E2%80%94%E5%85%B1%E4%BA%AB%E6%95%B0%E6%8D%AE"><span class="toc-number">3.0.2.3.</span> <span class="toc-text">3.android:sharedUserId 属性——共享数据</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#4-android-versionCode-%E5%B1%9E%E6%80%A7%E2%80%94%E2%80%94%E5%86%85%E9%83%A8%E7%89%88%E6%9C%AC%E5%8F%B7"><span class="toc-number">3.0.2.4.</span> <span class="toc-text">4.android:versionCode 属性——内部版本号</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#5-android-versionName-%E5%B1%9E%E6%80%A7%E2%80%94%E2%80%94%E6%98%BE%E7%A4%BA%E7%BB%99%E7%94%A8%E6%88%B7%E7%9A%84%E7%89%88%E6%9C%AC%E5%8F%B7"><span class="toc-number">3.0.2.5.</span> <span class="toc-text">5.android:versionName 属性——显示给用户的版本号</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#6-android-installLocation-%E5%B1%9E%E6%80%A7%E2%80%94%E2%80%94%E5%AE%89%E8%A3%85%E4%BD%8D%E7%BD%AE"><span class="toc-number">3.0.2.6.</span> <span class="toc-text">6.android:installLocation 属性——安装位置</span></a></li></ol></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Android-res%E3%80%81raw-%E5%92%8C-assets-%E7%9A%84%E5%8C%BA%E5%88%AB%E5%92%8C%E4%BD%BF%E7%94%A8"><span class="toc-number">4.</span> <span class="toc-text">Android res、raw 和 assets 的区别和使用</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Android-%E4%B8%BB%E9%A2%98"><span class="toc-number">5.</span> <span class="toc-text">Android 主题</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Android-%E7%9A%84-Intent-%E4%BD%BF%E7%94%A8%E6%96%B9%E6%B3%95"><span class="toc-number">6.</span> <span class="toc-text">Android 的 Intent 使用方法</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#1%E3%80%81Intent"><span class="toc-number">6.1.</span> <span class="toc-text">1、Intent</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Intent-%E7%9A%84%E6%A6%82%E5%BF%B5%EF%BC%9A"><span class="toc-number">6.1.1.</span> <span class="toc-text">Intent 的概念：</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Intent-%E7%94%A8%E6%B3%95%E5%92%8C%E6%9C%BA%E5%88%B6"><span class="toc-number">6.1.2.</span> <span class="toc-text">Intent 用法和机制</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2%E3%80%81Intent-%E7%9B%B8%E5%85%B3%E5%B1%9E%E6%80%A7"><span class="toc-number">6.2.</span> <span class="toc-text">2、Intent 相关属性</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1%E3%80%81Component-%E7%BB%84%E4%BB%B6-%EF%BC%9A%E7%9B%AE%E7%9A%84%E7%BB%84%E4%BB%B6"><span class="toc-number">6.2.1.</span> <span class="toc-text">1、Component (组件)：目的组件</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2%E3%80%81Action%EF%BC%88%E5%8A%A8%E4%BD%9C%EF%BC%89%EF%BC%9A%E7%94%A8%E6%9D%A5%E8%A1%A8%E7%8E%B0%E6%84%8F%E5%9B%BE%E7%9A%84%E8%A1%8C%E5%8A%A8"><span class="toc-number">6.2.2.</span> <span class="toc-text">2、Action（动作）：用来表现意图的行动</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3%E3%80%81Category%EF%BC%88%E7%B1%BB%E5%88%AB%EF%BC%89%EF%BC%9A%E7%94%A8%E6%9D%A5%E8%A1%A8%E7%8E%B0%E5%8A%A8%E4%BD%9C%E7%9A%84%E7%B1%BB%E5%88%AB"><span class="toc-number">6.2.3.</span> <span class="toc-text">3、Category（类别）：用来表现动作的类别</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4%E3%80%81Data%EF%BC%88%E6%95%B0%E6%8D%AE%EF%BC%89%EF%BC%9A%E8%A1%A8%E7%A4%BA%E4%B8%8E%E5%8A%A8%E4%BD%9C%E8%A6%81%E6%93%8D%E7%BA%B5%E7%9A%84%E6%95%B0%E6%8D%AE"><span class="toc-number">6.2.4.</span> <span class="toc-text">4、Data（数据）：表示与动作要操纵的数据</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5%E3%80%81type%EF%BC%88%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B%EF%BC%89%EF%BC%9A%E5%AF%B9%E4%BA%8Edata%E8%8C%83%E4%BE%8B%E7%9A%84%E6%8F%8F%E5%86%99"><span class="toc-number">6.2.5.</span> <span class="toc-text">5、type（数据类型）：对于data范例的描写</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#6%E3%80%81Extras%EF%BC%88%E6%89%A9%E5%B1%95%E4%BF%A1%E6%81%AF%EF%BC%89%EF%BC%9A%E6%89%A9%E5%B1%95%E4%BF%A1%E6%81%AF"><span class="toc-number">6.2.6.</span> <span class="toc-text">6、Extras（扩展信息）：扩展信息</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#7%E3%80%81Flags%EF%BC%88%E6%A0%87%E5%BF%97%E4%BD%8D%EF%BC%89%EF%BC%9A%E6%9C%9F%E6%9C%9B%E8%BF%99%E4%B8%AA%E6%84%8F%E5%9B%BE%E7%9A%84%E8%BF%90%E8%A1%8C%E6%A8%A1%E5%BC%8F"><span class="toc-number">6.2.7.</span> <span class="toc-text">7、Flags（标志位）：期望这个意图的运行模式</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3%E3%80%81Activity-%E7%9A%84%E5%90%AF%E5%8A%A8%E6%A8%A1%E5%BC%8F%EF%BC%9A%EF%BC%88%E9%9D%A2%E8%AF%95%E6%B3%A8%E6%84%8F%EF%BC%89"><span class="toc-number">6.3.</span> <span class="toc-text">3、Activity 的启动模式：（面试注意）</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%9B%B4%E5%A4%9A"><span class="toc-number">6.4.</span> <span class="toc-text">更多</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E9%93%BE%E6%8E%A5"><span class="toc-number">7.</span> <span class="toc-text">参考链接</span></a></li></ol></div></div></div><div class="card-widget card-recent-post"><div class="card-content"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/2021/03/20/ab%E6%A1%88%E4%BE%8B%E5%AD%A6%E4%B9%A0/" title=".ad 文件逆向分析"><img data-lazy-src="https://cdn.jsdelivr.net/gh/LCX666/picgo-blog/img/ab_android_backup.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt=".ad 文件逆向分析"/></a><div class="content"><a class="title" href="/2021/03/20/ab%E6%A1%88%E4%BE%8B%E5%AD%A6%E4%B9%A0/" title=".ad 文件逆向分析">.ad 文件逆向分析</a><time datetime="2021-03-20T02:51:52.000Z" title="发表于 2021-03-20 10:51:52">2021-03-20</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2021/03/15/frida%E5%AE%89%E8%A3%85%E4%B8%8E%E5%9F%BA%E7%A1%80/" title="frida 安装与基础"><img data-lazy-src="https://cdn.jsdelivr.net/gh/LCX666/picgo-blog/img/frida.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="frida 安装与基础"/></a><div class="content"><a class="title" href="/2021/03/15/frida%E5%AE%89%E8%A3%85%E4%B8%8E%E5%9F%BA%E7%A1%80/" title="frida 安装与基础">frida 安装与基础</a><time datetime="2021-03-15T06:31:12.000Z" title="发表于 2021-03-15 14:31:12">2021-03-15</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2021/03/02/android%20%E6%AD%A3%E5%90%91/" title="Android 正向入门基础知识"><img data-lazy-src="https://cdn.jsdelivr.net/gh/LCX666/picgo-blog/img/android.jfif" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Android 正向入门基础知识"/></a><div class="content"><a class="title" href="/2021/03/02/android%20%E6%AD%A3%E5%90%91/" title="Android 正向入门基础知识">Android 正向入门基础知识</a><time datetime="2021-03-02T14:12:21.000Z" title="发表于 2021-03-02 22:12:21">2021-03-02</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2021/02/01/WSL2+selenium/" title="无题"><img data-lazy-src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1/img/default.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="无题"/></a><div class="content"><a class="title" href="/2021/02/01/WSL2+selenium/" title="无题">无题</a><time datetime="2021-02-01T07:04:58.346Z" title="发表于 2021-02-01 15:04:58">2021-02-01</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2021/01/04/%E7%BC%96%E5%86%99%E7%88%AC%E8%99%AB/" title="Scrapy + requests 快速构建自己的爬虫"><img data-lazy-src="https://cdn.jsdelivr.net/gh/LCX666/picgo-blog/img/crawl.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Scrapy + requests 快速构建自己的爬虫"/></a><div class="content"><a class="title" href="/2021/01/04/%E7%BC%96%E5%86%99%E7%88%AC%E8%99%AB/" title="Scrapy + requests 快速构建自己的爬虫">Scrapy + requests 快速构建自己的爬虫</a><time datetime="2021-01-04T10:54:07.000Z" title="发表于 2021-01-04 18:54:07">2021-01-04</time></div></div></div></div></div></div></div></main><footer id="footer"><div id="footer-wrap"><div class="copyright">&copy;2020 - 2021 By Ron</div><div class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly</a></div><div class="footer_custom_text">Hi, welcome to my <a href="https://lucxer.tk/">blog</a>!</div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="font-plus" type="button" title="放大字体"><i class="fas fa-plus"></i></button><button id="font-minus" type="button" title="缩小字体"><i class="fas fa-minus"></i></button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside_config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="直达评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><i class="fas fa-arrow-up"></i></button></div></div><div id="algolia-search"><div class="search-dialog"><div class="search-dialog__title" id="algolia-search-title">Algolia</div><div id="algolia-input-panel"><div id="algolia-search-input"></div></div><hr/><div id="algolia-search-results"><div id="algolia-hits"></div><div id="algolia-pagination"></div><div id="algolia-stats"></div></div><span class="search-close-button"><i class="fas fa-times"></i></span></div><div id="search-mask"></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page/instantpage.min.js" type="module"></script><script src="https://cdn.jsdelivr.net/npm/vanilla-lazyload/dist/lazyload.iife.min.js"></script><script src="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.js"></script><script>function panguFn () {
+  if (typeof pangu === 'object') pangu.spacingElementById('content-inner')
+  else {
+    getScript('https://cdn.jsdelivr.net/npm/pangu/dist/browser/pangu.min.js')
+      .then(() => {
+        pangu.spacingElementById('content-inner')
+      })
+  }
+}
+
+function panguInit () {
+  if (false){
+    GLOBAL_CONFIG_SITE.isPost && panguFn()
+  } else {
+    panguFn()
+  }
+}
+
+document.addEventListener('DOMContentLoaded', panguInit)</script><script src="/js/search/algolia.js"></script><script>var preloader = {
+  endLoading: () => {
+    document.body.style.overflow = 'auto';
+    document.getElementById('loading-box').classList.add("loaded")
+  },
+  initLoading: () => {
+    document.body.style.overflow = '';
+    document.getElementById('loading-box').classList.remove("loaded")
+
+  }
+}
+window.addEventListener('load',()=> {preloader.endLoading()})</script><div class="js-pjax"><script>if (!window.MathJax) {
+  window.MathJax = {
+    loader: {
+      source: {
+        '[tex]/amsCd': '[tex]/amscd'
+      }
+    },
+    tex: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"]],
+      tags: 'ams'
+    },
+    options: {
+      renderActions: {
+        findScript: [10, doc => {
+          for (const node of document.querySelectorAll('script[type^="math/tex"]')) {
+            const display = !!node.type.match(/; *mode=display/)
+            const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display)
+            const text = document.createTextNode('')
+            node.parentNode.replaceChild(text, node)
+            math.start = {node: text, delim: '', n: 0}
+            math.end = {node: text, delim: '', n: 0}
+            doc.math.push(math)
+          }
+        }, ''],
+        addClass: [200,() => {
+          document.querySelectorAll('mjx-container:not([display=\'true\']').forEach( node => {
+            const target = node.parentNode
+            if (!target.classList.contains('has-jax')) {
+              target.classList.add('mathjax-overflow')
+            }
+          })
+        }, '', false]
+      }
+    }
+  }
+  
+  const script = document.createElement('script')
+  script.src = 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js'
+  script.id = 'MathJax-script'
+  script.async = true
+  document.head.appendChild(script)
+} else {
+  MathJax.startup.document.state(0)
+  MathJax.texReset()
+  MathJax.typeset()
+}</script><script>function loadValine () {
+  function initValine () {
+    let initData = {
+      el: '#vcomment',
+      appId: 'bXVyoSRa1rEnCAScfAPp2a6J-MdYXbMMI',
+      appKey: 'MPmhrDo6YIbw4Ostjj3Dl18c',
+      placeholder: 'Please leave your footprints',
+      avatar: 'monsterid',
+      meta: 'nick,mail,link'.split(','),
+      pageSize: '10',
+      lang: 'en',
+      recordIP: false,
+      serverURLs: '',
+      emojiCDN: '',
+      emojiMaps: "",
+      enableQQ: false,
+      path: window.location.pathname,
+    }
+
+    if (true) { 
+      initData.requiredFields= ('nick,mail'.split(','))
+    }
+    
+    if (false) {
+      const otherData = false
+      initData = Object.assign({}, initData, otherData)
+    }
+    
+    const valine = new Valine(initData)
+  }
+
+  if (typeof Valine === 'function') initValine() 
+  else getScript('https://cdn.jsdelivr.net/npm/valine/dist/Valine.min.js').then(initValine)
+}
+
+if ('Valine' === 'Valine' || !false) {
+  if (false) btf.loadComment(document.querySelector('#vcomment'),loadValine)
+  else setTimeout(loadValine, 0)
+} else {
+  function loadOtherComment () {
+    loadValine()
+  }
+}</script><script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div><canvas class="fireworks" mobile="false"></canvas><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1/dist/fireworks.min.js"></script><script defer="defer" id="ribbon" src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1/dist/canvas-ribbon.min.js" size="150" alpha="0.6" zIndex="-1" mobile="false" data-click="false"></script><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1/dist/activate-power-mode.min.js"></script><script>POWERMODE.colorful = true;
+POWERMODE.shake = true;
+POWERMODE.mobile = false;
+document.body.addEventListener('input', POWERMODE);
+</script><script src="https://cdn.jsdelivr.net/npm/pjax/pjax.min.js"></script><script>let pjaxSelectors = [
+  'title',
+  '#config_change',
+  '#body-wrap',
+  '#rightside-config-hide',
+  '#rightside-config-show',
+  '.js-pjax'
+]
+
+if (false) {
+  pjaxSelectors.unshift('meta[property="og:image"]', 'meta[property="og:title"]', 'meta[property="og:url"]')
+}
+
+var pjax = new Pjax({
+  elements: 'a:not([target="_blank"])',
+  selectors: pjaxSelectors,
+  cacheBust: false,
+  analytics: false,
+  scrollRestoration: false
+})
+
+document.addEventListener('pjax:complete', function () {
+  window.refreshFn()
+
+  document.querySelectorAll('script[data-pjax]').forEach(item => {
+    const newScript = document.createElement('script')
+    const content = item.text || item.textContent || item.innerHTML || ""
+    Array.from(item.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value))
+    newScript.appendChild(document.createTextNode(content))
+    item.parentNode.replaceChild(newScript, item)
+  })
+
+  GLOBAL_CONFIG.islazyload && window.lazyLoadInstance.update()
+
+  typeof chatBtnFn === 'function' && chatBtnFn()
+  typeof panguInit === 'function' && panguInit()
+
+  if (typeof gtag === 'function') {
+    gtag('config', '', {'page_path': window.location.pathname});
+  }
+
+  typeof loadMeting === 'function' && document.getElementsByClassName('aplayer').length && loadMeting()
+
+  // Analytics
+  if (false) {
+    MtaH5.pgv()
+  }
+
+  // prismjs
+  typeof Prism === 'object' && Prism.highlightAll()
+
+  typeof preloader === 'object' && preloader.endLoading()
+})
+
+
+document.addEventListener('pjax:send', function () {
+  typeof preloader === 'object' && preloader.initLoading()
+  
+  if (window.aplayers) {
+    for (let i = 0; i < window.aplayers.length; i++) {
+      if (!window.aplayers[i].options.fixed) {
+        window.aplayers[i].destroy()
+      }
+    }
+  }
+
+  typeof typed === 'object' && typed.destroy()
+
+  //reset readmode
+  const $bodyClassList = document.body.classList
+  $bodyClassList.contains('read-mode') && $bodyClassList.remove('read-mode')
+
+})</script><script>(function(){
+  const bp = document.createElement('script');
+  const curProtocol = window.location.protocol.split(':')[0];
+  if (curProtocol === 'https') {
+    bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+  }
+  else{
+    bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+  }
+  bp.dataset.pjax = ''
+  const s = document.getElementsByTagName("script")[0];
+  s.parentNode.insertBefore(bp, s);
+})()</script></div></body></html>
