@@ -1,0 +1,419 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width,initial-scale=1"><title>反编译未加固的 APK | Ron's Blog</title><meta name="keywords" content="Android,RE,APKtool,jd-gui,PKID,dex2jar"><meta name="author" content="Ron"><meta name="copyright" content="Ron"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta http-equiv="Cache-Control" content="no-transform"><meta http-equiv="Cache-Control" content="no-siteapp"><meta name="description" content="利用 apktool+dex2jar+jd-gui 完成对未加固 APK 的反编译查看。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="反编译未加固的 APK">
+<meta property="og:url" content="https://qriosa.github.io/2021/03/05/13.%E5%8F%8D%E7%BC%96%E8%AF%91%E4%B8%80%E4%B8%AAapk/index.html">
+<meta property="og:site_name" content="Ron&#39;s Blog">
+<meta property="og:description" content="利用 apktool+dex2jar+jd-gui 完成对未加固 APK 的反编译查看。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/APK-RE.jpg">
+<meta property="article:published_time" content="2021-03-05T02:11:12.000Z">
+<meta property="article:modified_time" content="2024-07-03T07:04:05.035Z">
+<meta property="article:author" content="Ron">
+<meta property="article:tag" content="Android">
+<meta property="article:tag" content="RE">
+<meta property="article:tag" content="APKtool">
+<meta property="article:tag" content="jd-gui">
+<meta property="article:tag" content="PKID">
+<meta property="article:tag" content="dex2jar">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/APK-RE.jpg"><link rel="shortcut icon" href="/img/favicon.ico"><link rel="canonical" href="https://qriosa.github.io/2021/03/05/13.%E5%8F%8D%E7%BC%96%E8%AF%91%E4%B8%80%E4%B8%AAapk/"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="preconnect" href="//zz.bdstatic.com"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/instantsearch.js@2.10.5/dist/instantsearch.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/instantsearch.js@2.10.5/dist/instantsearch.min.js" defer></script><script>var GLOBAL_CONFIG = { 
+  root: '/',
+  algolia: {"appId":"YJRLD9BYXZ","apiKey":"6098438f46d523cb882b858aed7b9962","indexName":"blog","hits":{"per_page":6},"languages":{"input_placeholder":"搜索文章","hits_empty":"找不到您查询的内容：${query}","hits_stats":"找到 ${hits} 条结果，用时 ${time} 毫秒"}},
+  localSearch: undefined,
+  translate: undefined,
+  noticeOutdate: {"limitDay":365,"position":"top","messagePrev":"It has been","messageNext":"days since the last update, the content of the article may be outdated."},
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '天',
+  date_suffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"你已切换为繁体","cht_to_chs":"你已切换为简体","day_to_night":"你已切换为深色模式","night_to_day":"你已切换为浅色模式","bgLight":"#49b1f5","bgDark":"#121212","position":"bottom-left"},
+  source: {
+    jQuery: 'https://cdn.jsdelivr.net/npm/jquery@latest/dist/jquery.min.js',
+    justifiedGallery: {
+      js: 'https://cdn.jsdelivr.net/npm/justifiedGallery/dist/js/jquery.justifiedGallery.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/justifiedGallery/dist/css/justifiedGallery.min.css'
+    },
+    fancybox: {
+      js: 'https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@latest/dist/jquery.fancybox.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@latest/dist/jquery.fancybox.min.css'
+    }
+  },
+  isPhotoFigcaption: true,
+  islazyload: true,
+  isanchor: true
+};
+
+var saveToLocal = {
+  set: function setWithExpiry(key, value, ttl) {
+    const now = new Date()
+    const expiryDay = ttl * 86400000
+    const item = {
+      value: value,
+      expiry: now.getTime() + expiryDay,
+    }
+    localStorage.setItem(key, JSON.stringify(item))
+  },
+
+  get: function getWithExpiry(key) {
+    const itemStr = localStorage.getItem(key)
+
+    if (!itemStr) {
+      return undefined
+    }
+    const item = JSON.parse(itemStr)
+    const now = new Date()
+
+    if (now.getTime() > item.expiry) {
+      localStorage.removeItem(key)
+      return undefined
+    }
+    return item.value
+  }
+}
+
+// https://stackoverflow.com/questions/16839698/jquery-getscript-alternative-in-native-javascript
+const getScript = url => new Promise((resolve, reject) => {
+  const script = document.createElement('script')
+  script.src = url
+  script.async = true
+  script.onerror = reject
+  script.onload = script.onreadystatechange = function() {
+    const loadState = this.readyState
+    if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+    script.onload = script.onreadystatechange = null
+    resolve()
+  }
+  document.head.appendChild(script)
+})</script><script id="config_change">var GLOBAL_CONFIG_SITE = { 
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: true,
+  isToc: true,
+  postUpdate: '2024-07-03 15:04:05'
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(function () {  window.activateDarkMode = function () {
+    document.documentElement.setAttribute('data-theme', 'dark')
+    if (document.querySelector('meta[name="theme-color"]') !== null) {
+      document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+    }
+  }
+  window.activateLightMode = function () {
+    document.documentElement.setAttribute('data-theme', 'light')
+   if (document.querySelector('meta[name="theme-color"]') !== null) {
+      document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+    }
+  }
+  const autoChangeMode = '1'
+  const t = saveToLocal.get('theme')
+  if (autoChangeMode === '1') {
+    const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches
+    const isLightMode = window.matchMedia('(prefers-color-scheme: light)').matches
+    const isNotSpecified = window.matchMedia('(prefers-color-scheme: no-preference)').matches
+    const hasNoSupport = !isDarkMode && !isLightMode && !isNotSpecified
+    if (t === undefined) {
+      if (isLightMode) activateLightMode()
+      else if (isDarkMode) activateDarkMode()
+      else if (isNotSpecified || hasNoSupport) {
+        const now = new Date()
+        const hour = now.getHours()
+        const isNight = hour <= 6 || hour >= 18
+        isNight ? activateDarkMode() : activateLightMode()
+      }
+      window.matchMedia('(prefers-color-scheme: dark)').addListener(function (e) {
+        if (saveToLocal.get('theme') === undefined) {
+          e.matches ? activateDarkMode() : activateLightMode()
+        }
+      })
+    } else if (t === 'light') activateLightMode()
+    else activateDarkMode()
+  } else if (autoChangeMode === '2') {
+    const now = new Date()
+    const hour = now.getHours()
+    const isNight = hour <= 6 || hour >= 18
+    if (t === undefined) isNight ? activateDarkMode() : activateLightMode()
+    else if (t === 'light') activateLightMode()
+    else activateDarkMode()
+  } else {
+    if (t === 'dark') activateDarkMode()
+    else if (t === 'light') activateLightMode()
+  }const asideStatus = saveToLocal.get('aside-status')
+if (asideStatus !== undefined) {
+   if (asideStatus === 'hide') {
+     document.documentElement.classList.add('hide-aside')
+   } else {
+     document.documentElement.classList.remove('hide-aside')
+   }
+}const fontSizeVal = saveToLocal.get('global-font-size')
+if (fontSizeVal !== undefined) {
+  document.documentElement.style.setProperty('--global-font-size', fontSizeVal + 'px')
+}})()</script><meta name="generator" content="Hexo 5.3.0"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="author-avatar"><img class="avatar-img" data-lazy-src="/img/kid.jpg" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data"><div class="data-item is-center"><div class="data-item-link"><a href="/archives/"><div class="headline">文章</div><div class="length-num">31</div></a></div></div><div class="data-item is-center"><div class="data-item-link"><a href="/tags/"><div class="headline">标签</div><div class="length-num">58</div></a></div></div><div class="data-item is-center"><div class="data-item-link"><a href="/categories/"><div class="headline">分类</div><div class="length-num">6</div></a></div></div></div><hr/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 时间轴</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> 关于</span></a></div></div></div></div><div id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/APK-RE.jpg)"><nav id="nav"><span id="blog_name"><a id="site-name" href="/">Ron's Blog</a></span><div id="menus"><div id="search-button"><a class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 时间轴</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> 关于</span></a></div></div><div id="toggle-menu"><a class="site-page"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="post-info"><h1 class="post-title">反编译未加固的 APK</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2021-03-05T02:11:12.000Z" title="发表于 2021-03-05 10:11:12">2021-03-05</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2024-07-03T07:04:05.035Z" title="更新于 2024-07-03 15:04:05">2024-07-03</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/Android/">Android</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">字数总计:</span><span class="word-count">782</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>2分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">阅读量:</span><span id="busuanzi_value_page_pv"></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><h2 id="反编译未加固的-APK"><a href="#反编译未加固的-APK" class="headerlink" title="反编译未加固的 APK"></a>反编译未加固的 APK</h2><h3 id="所使用到的工具"><a href="#所使用到的工具" class="headerlink" title="所使用到的工具"></a>所使用到的工具</h3><p><a target="_blank" rel="noopener" href="https://github.com/iBotPeaches/Apktool">apktool</a>: 资源文件获取，可以提取出图片文件和布局文件进行使用查看。 </p>
+<p><a target="_blank" rel="noopener" href="https://github.com/pxb1988/dex2jar">dex2jar</a>：将 apk （实际上是其中的 classes.dex） 反编译成 java 源码。</p>
+<p><a target="_blank" rel="noopener" href="https://github.com/java-decompiler/jd-gui">jd-gui</a>：查看 jar 文件的结构和其中的源码。</p>
+<p><a target="_blank" rel="noopener" href="https://xz.aliyun.com/t/2095">PKID</a>：查壳的工具。本来只有 Windows 版本的，有位大佬觉得每次虚拟机麻烦，于是写了个 java 的。</p>
+<h3 id="使用-PKID-查壳"><a href="#使用-PKID-查壳" class="headerlink" title="使用 PKID 查壳"></a>使用 PKID 查壳</h3><p>双击打开 <code>pkid.jar</code> 然后将需要查的 <code>apk</code> 直接拖入即可。</p>
+<p><img src= "/img/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/image-20210323181729928.png" alt="未加壳"></p>
+<p><img src= "/img/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/image-20210323181827309.png" alt="加壳"></p>
+<p>其实有加壳的一般都具有明显的特征，因为大部分都是使用一些别人的加固厂商的产品来加固的。</p>
+<p>如上面的 <code>360加固</code> 的 demo 中就有明显的特征： <code>qihoo</code> 。</p>
+<p><img src= "/img/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/image-20210323182028397.png" alt="qihoo关键字"></p>
+<h3 id="使用-apktool-反编译资源文件和-manifest-文件"><a href="#使用-apktool-反编译资源文件和-manifest-文件" class="headerlink" title="使用 apktool 反编译资源文件和 manifest 文件"></a>使用 apktool 反编译资源文件和 manifest 文件</h3><p>为了便于操作和方便，可以将上述的工具下载、解压后都统一放到自己的 tool 目录中，建议再添加一个环境变量。于是就可以随处键入唤起。</p>
+<p>打开终端，键入下面的命令。启动 <code>apktool</code> 将 <code>demo.apk</code> 反编译到 <code>demoapk/</code> 目录下。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">java -jar apktool_2.4.0.jar d -f ../demo.apk -o ../demoapk</span><br></pre></td></tr></table></figure>
+<p> 效果如下如所示</p>
+<p><img src= "/img/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/image-20210323175109043.png" alt="反编译截图"></p>
+<p>打开文件夹 <code>demoapk/</code>  ，可以看到其中的文件，包括 <code>manifest</code> 文件和 <code>res/</code> 文件夹。</p>
+<p><img src= "/img/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/image-20210323175151710.png" alt="文件内容"></p>
+<p>但是其中却只反编译到了 <code>smali</code> 随便打开都是只到了 <code>smali</code> ，虽然高级一点的逆向者都需要能够随手手撕 <code>smali</code> 然后再打包签名，但是作为新手，还不至于。</p>
+<h3 id="使用-dex2jar-反编译到-java-源码"><a href="#使用-dex2jar-反编译到-java-源码" class="headerlink" title="使用 dex2jar 反编译到 java 源码"></a>使用 dex2jar 反编译到 java 源码</h3><p>前面 <code>apktool</code> 只反编译到了 <code>smali</code> ，而接下来的 <code>dex2jar</code> 就可以直接将 <code>classes.dex</code> 反编译到 <code>jar</code> 。</p>
+<p>将上面的 <code>demo.apk</code> 文件修改后缀名为 <code>zip</code> 后进行解压，其中就会发现 <code>classes.dex</code> 文件。如下图所示，</p>
+<blockquote>
+<p>其中还会有 <code>classes2.dex</code> , <code>classes3.dex</code>  …..这是由于 <code>dex</code> 的文件结构决定了一个文件中的最大方法数量不能超过 65535，而现在的大型 app 的方法数量早就超过了这个数值，于是就有了 multi-dex 的技术，可以生成多个 dex 文件来存放。</p>
+<p>关于这个问题，笔者在网上找到一个解决方法： <code>d2j-dex2jar.sh the-apk-witch-mutidex.apk</code> 就可以直接完成。</p>
+</blockquote>
+<p><img src= "/img/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/image-20210323175906134.png" alt="dex文件"></p>
+<p>对于某个单独的 <code>dex</code> 文件的反编译可以直接使用下面的命令完成。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">d2j-dex2jar classes.dex</span><br></pre></td></tr></table></figure>
+<p>然后就会生成对应反编译之后的 <code>.jar</code> 文件。</p>
+<p>对于有 <code>multidex</code> 的就使用如下的命令</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">d2j-dex2jar.sh the-apk-witch-mutidex.apk</span><br></pre></td></tr></table></figure>
+<p><img src= "/img/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/image-20210323181036965.png" alt="d2j-dex2jar命令"></p>
+<p><img src= "/img/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/image-20210323181119852.png" alt="生成的jar"></p>
+<h3 id="使用-jd-gui-查看-jar-文件的源码"><a href="#使用-jd-gui-查看-jar-文件的源码" class="headerlink" title="使用 jd-gui 查看 jar 文件的源码"></a>使用 jd-gui 查看 jar 文件的源码</h3><p>前面 <code>dex2jar</code> 已经完成了生成 <code>.jar</code> 的工作，接下来就应用 <code>jd-gui</code> 来查看其中的 java 源码。</p>
+<p>双击运行后，将想要查看的 <code>.jar</code> 拖入即可。</p>
+<p>大概就是下图的效果。</p>
+<p><img src= "/img/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/image-20210323181207202.png" alt="jd-gui查看效果"></p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>至此，一个没有加壳的 <code>apk</code> 已经被反编译完成了。脱壳还在学习中。</p>
+<h3 id="参考链接"><a href="#参考链接" class="headerlink" title="参考链接"></a>参考链接</h3><p>参考链接1：反编译一个 APK <a target="_blank" rel="noopener" href="https://www.jianshu.com/p/dbe579f6cc84">https://www.jianshu.com/p/dbe579f6cc84</a></p>
+<p>参考链接2：dex2jar multidex <a target="_blank" rel="noopener" href="https://github.com/pxb1988/dex2jar/issues/63">https://github.com/pxb1988/dex2jar/issues/63</a></p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta">文章作者: </span><span class="post-copyright-info"><a href="mailto:undefined">Ron</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta">文章链接: </span><span class="post-copyright-info"><a href="https://qriosa.github.io/2021/03/05/13.%E5%8F%8D%E7%BC%96%E8%AF%91%E4%B8%80%E4%B8%AAapk/">https://qriosa.github.io/2021/03/05/13.%E5%8F%8D%E7%BC%96%E8%AF%91%E4%B8%80%E4%B8%AAapk/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta">版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来自 <a href="https://qriosa.github.io" target="_blank">Ron's Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/Android/">Android</a><a class="post-meta__tags" href="/tags/RE/">RE</a><a class="post-meta__tags" href="/tags/APKtool/">APKtool</a><a class="post-meta__tags" href="/tags/jd-gui/">jd-gui</a><a class="post-meta__tags" href="/tags/PKID/">PKID</a><a class="post-meta__tags" href="/tags/dex2jar/">dex2jar</a></div><div class="post_share"><div class="addthis_inline_share_toolbox"></div><script src="//s7.addthis.com/js/300/addthis_widget.js#pubid=5fb3e45d5f9ff11c" async="async"></script></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i> 打赏<div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="/img/wechat.png" target="_blank"><img class="post-qr-code-img" data-lazy-src="/img/wechat.png" alt="wechat"/></a><div class="post-qr-code-desc">wechat</div></li><li class="reward-item"><a href="/img/alipay.png" target="_blank"><img class="post-qr-code-img" data-lazy-src="/img/alipay.png" alt="alipay"/></a><div class="post-qr-code-desc">alipay</div></li></ul></div></div></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/2021/03/15/14.frida%E5%AE%89%E8%A3%85%E4%B8%8E%E5%9F%BA%E7%A1%80/"><img class="prev-cover" data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/frida.png" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="pagination-info"><div class="label">上一篇</div><div class="prev_info">frida 安装与基础</div></div></a></div><div class="next-post pull-right"><a href="/2021/03/02/12.android%20%E6%AD%A3%E5%90%91/"><img class="next-cover" data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/android.jfif" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">Android 正向入门基础知识</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span> 相关推荐</span></div><div class="relatedPosts-list"><div><a href="/2021/03/20/15.ab案例学习/" title=".ab 文件逆向分析"><img class="cover" data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/ab_android_backup.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2021-03-20</div><div class="title">.ab 文件逆向分析</div></div></a></div><div><a href="/2021/03/02/12.android 正向/" title="Android 正向入门基础知识"><img class="cover" data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/android.jfif" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2021-03-02</div><div class="title">Android 正向入门基础知识</div></div></a></div><div><a href="/2021/03/15/14.frida安装与基础/" title="frida 安装与基础"><img class="cover" data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/frida.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2021-03-15</div><div class="title">frida 安装与基础</div></div></a></div><div><a href="/2021/05/10/18.NDK_Hook/" title="NDK Hook"><img class="cover" data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/Hook.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2021-05-10</div><div class="title">NDK Hook</div></div></a></div><div><a href="/2021/04/10/17.JNI入门了解/" title="NDK 与 JNI 入门了解"><img class="cover" data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/JNI&NDK.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2021-04-10</div><div class="title">NDK 与 JNI 入门了解</div></div></a></div><div><a href="/2021/04/05/16.Java 反射/" title="Java 反射机制学习"><img class="cover" data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/image-20210331103826461.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2021-04-05</div><div class="title">Java 反射机制学习</div></div></a></div></div></div><hr/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div class="vcomment" id="vcomment"></div></div></div></div></div><div class="aside_content" id="aside_content"><div class="card-widget card-info"><div class="card-content"><div class="card-info-avatar is-center"><img class="avatar-img" data-lazy-src="/img/kid.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/><div class="author-info__name">Ron</div><div class="author-info__description">retired OIer, Novice CTF Enthusiast</div></div><div class="card-info-data"><div class="card-info-data-item is-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">31</div></a></div><div class="card-info-data-item is-center"><a href="/tags/"><div class="headline">标签</div><div class="length-num">58</div></a></div><div class="card-info-data-item is-center"><a href="/categories/"><div class="headline">分类</div><div class="length-num">6</div></a></div></div><a class="button--animated" id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/LCX666"><i class="fab fa-github"></i><span>Follow Me</span></a><div class="card-info-social-icons is-center"><a class="social-icon" href="https://github.com/LCX666" target="_blank" title="Github"><i class="fab fa-github"></i></a><a class="social-icon" href="mailto:lucxer@qq.com" target="_blank" title="Email"><i class="fas fa-envelope"></i></a></div></div></div><div class="card-widget card-announcement"><div class="card-content"><div class="item-headline"><i class="fas fa-bullhorn card-announcement-animation"></i><span>公告</span></div><div class="announcement_content">号外！号外！号外！评论系统已开放！</div></div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="card-content"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%8D%E7%BC%96%E8%AF%91%E6%9C%AA%E5%8A%A0%E5%9B%BA%E7%9A%84-APK"><span class="toc-number">1.</span> <span class="toc-text">反编译未加固的 APK</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%89%80%E4%BD%BF%E7%94%A8%E5%88%B0%E7%9A%84%E5%B7%A5%E5%85%B7"><span class="toc-number">1.1.</span> <span class="toc-text">所使用到的工具</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8-PKID-%E6%9F%A5%E5%A3%B3"><span class="toc-number">1.2.</span> <span class="toc-text">使用 PKID 查壳</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8-apktool-%E5%8F%8D%E7%BC%96%E8%AF%91%E8%B5%84%E6%BA%90%E6%96%87%E4%BB%B6%E5%92%8C-manifest-%E6%96%87%E4%BB%B6"><span class="toc-number">1.3.</span> <span class="toc-text">使用 apktool 反编译资源文件和 manifest 文件</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8-dex2jar-%E5%8F%8D%E7%BC%96%E8%AF%91%E5%88%B0-java-%E6%BA%90%E7%A0%81"><span class="toc-number">1.4.</span> <span class="toc-text">使用 dex2jar 反编译到 java 源码</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8-jd-gui-%E6%9F%A5%E7%9C%8B-jar-%E6%96%87%E4%BB%B6%E7%9A%84%E6%BA%90%E7%A0%81"><span class="toc-number">1.5.</span> <span class="toc-text">使用 jd-gui 查看 jar 文件的源码</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-number">1.6.</span> <span class="toc-text">总结</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E9%93%BE%E6%8E%A5"><span class="toc-number">1.7.</span> <span class="toc-text">参考链接</span></a></li></ol></li></ol></div></div></div><div class="card-widget card-recent-post"><div class="card-content"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/2021/10/05/31.%E4%B8%A4%E4%B8%AA%E5%AF%86%E7%A0%81%E9%A2%98/" title="两个有意思的题"><img data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/practice_3_crypto.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="两个有意思的题"/></a><div class="content"><a class="title" href="/2021/10/05/31.%E4%B8%A4%E4%B8%AA%E5%AF%86%E7%A0%81%E9%A2%98/" title="两个有意思的题">两个有意思的题</a><time datetime="2021-10-05T04:15:06.000Z" title="发表于 2021-10-05 12:15:06">2021-10-05</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2021/09/25/30.RSA-%E7%9B%B8%E5%85%B3%E6%B6%88%E6%81%AF%E6%94%BB%E5%87%BB/" title="RSA-9 Coppersmith 相关攻击"><img data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/RSA-9.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="RSA-9 Coppersmith 相关攻击"/></a><div class="content"><a class="title" href="/2021/09/25/30.RSA-%E7%9B%B8%E5%85%B3%E6%B6%88%E6%81%AF%E6%94%BB%E5%87%BB/" title="RSA-9 Coppersmith 相关攻击">RSA-9 Coppersmith 相关攻击</a><time datetime="2021-09-25T05:25:46.000Z" title="发表于 2021-09-25 13:25:46">2021-09-25</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2021/09/15/29.RSA-%E4%BD%8E%E5%8A%A0%E5%AF%86%E6%8C%87%E6%95%B0(%E5%B9%BF%E6%92%AD)%E6%94%BB%E5%87%BB/" title="RSA-8 低加密指数广播攻击"><img data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/RSA-8.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="RSA-8 低加密指数广播攻击"/></a><div class="content"><a class="title" href="/2021/09/15/29.RSA-%E4%BD%8E%E5%8A%A0%E5%AF%86%E6%8C%87%E6%95%B0(%E5%B9%BF%E6%92%AD)%E6%94%BB%E5%87%BB/" title="RSA-8 低加密指数广播攻击">RSA-8 低加密指数广播攻击</a><time datetime="2021-09-15T15:13:10.000Z" title="发表于 2021-09-15 23:13:10">2021-09-15</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2021/09/11/28.RSA-%E4%BD%8E%E8%A7%A3%E5%AF%86%E6%8C%87%E6%95%B0%E6%94%BB%E5%87%BB/" title="RSA-7 低解密指数攻击"><img data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/RSA-7.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="RSA-7 低解密指数攻击"/></a><div class="content"><a class="title" href="/2021/09/11/28.RSA-%E4%BD%8E%E8%A7%A3%E5%AF%86%E6%8C%87%E6%95%B0%E6%94%BB%E5%87%BB/" title="RSA-7 低解密指数攻击">RSA-7 低解密指数攻击</a><time datetime="2021-09-11T05:23:15.000Z" title="发表于 2021-09-11 13:23:15">2021-09-11</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2021/09/04/27.RSA-%E5%85%B1%E6%A8%A1%E6%94%BB%E5%87%BB/" title="RSA-6 共模攻击"><img data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/RSA-6.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="RSA-6 共模攻击"/></a><div class="content"><a class="title" href="/2021/09/04/27.RSA-%E5%85%B1%E6%A8%A1%E6%94%BB%E5%87%BB/" title="RSA-6 共模攻击">RSA-6 共模攻击</a><time datetime="2021-09-04T08:17:54.000Z" title="发表于 2021-09-04 16:17:54">2021-09-04</time></div></div></div></div></div></div></div></main><footer id="footer"><div id="footer-wrap"><div class="copyright">&copy;2020 - 2024 By Ron</div><div class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly</a></div><div class="footer_custom_text">Hi, welcome to my <a target="_blank" rel="noopener" href="https://lucxer.tech/">blog</a>!</div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="font-plus" type="button" title="放大字体"><i class="fas fa-plus"></i></button><button id="font-minus" type="button" title="缩小字体"><i class="fas fa-minus"></i></button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside_config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="直达评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><i class="fas fa-arrow-up"></i></button></div></div><div id="algolia-search"><div class="search-dialog"><div class="search-dialog__title" id="algolia-search-title">Algolia</div><div id="algolia-input-panel"><div id="algolia-search-input"></div></div><hr/><div id="algolia-search-results"><div id="algolia-hits"></div><div id="algolia-pagination"></div><div id="algolia-stats"></div></div><span class="search-close-button"><i class="fas fa-times"></i></span></div><div id="search-mask"></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page/instantpage.min.js" type="module"></script><script src="https://cdn.jsdelivr.net/npm/vanilla-lazyload/dist/lazyload.iife.min.js"></script><script src="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.js"></script><script>function panguFn () {
+  if (typeof pangu === 'object') pangu.spacingElementById('content-inner')
+  else {
+    getScript('https://cdn.jsdelivr.net/npm/pangu/dist/browser/pangu.min.js')
+      .then(() => {
+        pangu.spacingElementById('content-inner')
+      })
+  }
+}
+
+function panguInit () {
+  if (false){
+    GLOBAL_CONFIG_SITE.isPost && panguFn()
+  } else {
+    panguFn()
+  }
+}
+
+document.addEventListener('DOMContentLoaded', panguInit)</script><script src="/js/search/algolia.js"></script><script>var preloader = {
+  endLoading: () => {
+    document.body.style.overflow = 'auto';
+    document.getElementById('loading-box').classList.add("loaded")
+  },
+  initLoading: () => {
+    document.body.style.overflow = '';
+    document.getElementById('loading-box').classList.remove("loaded")
+
+  }
+}
+window.addEventListener('load',()=> {preloader.endLoading()})</script><div class="js-pjax"><script>if (!window.MathJax) {
+  window.MathJax = {
+    loader: {
+      source: {
+        '[tex]/amsCd': '[tex]/amscd'
+      }
+    },
+    tex: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"]],
+      tags: 'ams'
+    },
+    options: {
+      renderActions: {
+        findScript: [10, doc => {
+          for (const node of document.querySelectorAll('script[type^="math/tex"]')) {
+            const display = !!node.type.match(/; *mode=display/)
+            const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display)
+            const text = document.createTextNode('')
+            node.parentNode.replaceChild(text, node)
+            math.start = {node: text, delim: '', n: 0}
+            math.end = {node: text, delim: '', n: 0}
+            doc.math.push(math)
+          }
+        }, ''],
+        addClass: [200,() => {
+          document.querySelectorAll('mjx-container:not([display=\'true\']').forEach( node => {
+            const target = node.parentNode
+            if (!target.classList.contains('has-jax')) {
+              target.classList.add('mathjax-overflow')
+            }
+          })
+        }, '', false]
+      }
+    }
+  }
+  
+  const script = document.createElement('script')
+  script.src = 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js'
+  script.id = 'MathJax-script'
+  script.async = true
+  document.head.appendChild(script)
+} else {
+  MathJax.startup.document.state(0)
+  MathJax.texReset()
+  MathJax.typeset()
+}</script><script>function loadValine () {
+  function initValine () {
+    let initData = {
+      el: '#vcomment',
+      appId: 'bXVyoSRa1rEnCAScfAPp2a6J-MdYXbMMI',
+      appKey: 'MPmhrDo6YIbw4Ostjj3Dl18c',
+      placeholder: 'Please leave your footprints',
+      avatar: 'monsterid',
+      meta: 'nick,mail,link'.split(','),
+      pageSize: '10',
+      lang: 'en',
+      recordIP: false,
+      serverURLs: '',
+      emojiCDN: '',
+      emojiMaps: "",
+      enableQQ: false,
+      path: window.location.pathname,
+    }
+
+    if (true) { 
+      initData.requiredFields= ('nick,mail'.split(','))
+    }
+    
+    if (false) {
+      const otherData = false
+      initData = Object.assign({}, initData, otherData)
+    }
+    
+    const valine = new Valine(initData)
+  }
+
+  if (typeof Valine === 'function') initValine() 
+  else getScript('https://cdn.jsdelivr.net/npm/valine/dist/Valine.min.js').then(initValine)
+}
+
+if ('Valine' === 'Valine' || !true) {
+  if (true) btf.loadComment(document.querySelector('#vcomment'),loadValine)
+  else setTimeout(loadValine, 0)
+} else {
+  function loadOtherComment () {
+    loadValine()
+  }
+}</script><script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div><canvas class="fireworks" mobile="false"></canvas><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1/dist/fireworks.min.js"></script><script defer="defer" id="ribbon" src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1/dist/canvas-ribbon.min.js" size="150" alpha="0.6" zIndex="-1" mobile="false" data-click="false"></script><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1/dist/activate-power-mode.min.js"></script><script>POWERMODE.colorful = true;
+POWERMODE.shake = true;
+POWERMODE.mobile = false;
+document.body.addEventListener('input', POWERMODE);
+</script><script src="https://cdn.jsdelivr.net/npm/pjax/pjax.min.js"></script><script>let pjaxSelectors = [
+  'title',
+  '#config_change',
+  '#body-wrap',
+  '#rightside-config-hide',
+  '#rightside-config-show',
+  '.js-pjax'
+]
+
+if (false) {
+  pjaxSelectors.unshift('meta[property="og:image"]', 'meta[property="og:title"]', 'meta[property="og:url"]')
+}
+
+var pjax = new Pjax({
+  elements: 'a:not([target="_blank"])',
+  selectors: pjaxSelectors,
+  cacheBust: false,
+  analytics: false,
+  scrollRestoration: false
+})
+
+document.addEventListener('pjax:complete', function () {
+  window.refreshFn()
+
+  document.querySelectorAll('script[data-pjax]').forEach(item => {
+    const newScript = document.createElement('script')
+    const content = item.text || item.textContent || item.innerHTML || ""
+    Array.from(item.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value))
+    newScript.appendChild(document.createTextNode(content))
+    item.parentNode.replaceChild(newScript, item)
+  })
+
+  GLOBAL_CONFIG.islazyload && window.lazyLoadInstance.update()
+
+  typeof chatBtnFn === 'function' && chatBtnFn()
+  typeof panguInit === 'function' && panguInit()
+
+  if (typeof gtag === 'function') {
+    gtag('config', '', {'page_path': window.location.pathname});
+  }
+
+  typeof loadMeting === 'function' && document.getElementsByClassName('aplayer').length && loadMeting()
+
+  // Analytics
+  if (false) {
+    MtaH5.pgv()
+  }
+
+  // prismjs
+  typeof Prism === 'object' && Prism.highlightAll()
+
+  typeof preloader === 'object' && preloader.endLoading()
+})
+
+
+document.addEventListener('pjax:send', function () {
+  typeof preloader === 'object' && preloader.initLoading()
+  
+  if (window.aplayers) {
+    for (let i = 0; i < window.aplayers.length; i++) {
+      if (!window.aplayers[i].options.fixed) {
+        window.aplayers[i].destroy()
+      }
+    }
+  }
+
+  typeof typed === 'object' && typed.destroy()
+
+  //reset readmode
+  const $bodyClassList = document.body.classList
+  $bodyClassList.contains('read-mode') && $bodyClassList.remove('read-mode')
+
+})</script><script>(function(){
+  const bp = document.createElement('script');
+  const curProtocol = window.location.protocol.split(':')[0];
+  if (curProtocol === 'https') {
+    bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+  }
+  else{
+    bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+  }
+  bp.dataset.pjax = ''
+  const s = document.getElementsByTagName("script")[0];
+  s.parentNode.insertBefore(bp, s);
+})()</script></div></body></html>

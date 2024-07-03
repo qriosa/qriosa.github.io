@@ -1,0 +1,514 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width,initial-scale=1"><title>RSA-4 e 和 ɸ(n) 不互质 | Ron's Blog</title><meta name="keywords" content="CTF,Crypto,RSA"><meta name="author" content="Ron"><meta name="copyright" content="Ron"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta http-equiv="Cache-Control" content="no-transform"><meta http-equiv="Cache-Control" content="no-siteapp"><meta name="description" content="由于e 和 ɸ(n) 不互质造成攻击者可以直接分解模数。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="RSA-4 e 和 ɸ(n) 不互质">
+<meta property="og:url" content="https://qriosa.github.io/2021/08/29/25.RSA-e%E5%92%8C%CF%86(n)%E4%B8%8D%E4%BA%92%E8%B4%A8/index.html">
+<meta property="og:site_name" content="Ron&#39;s Blog">
+<meta property="og:description" content="由于e 和 ɸ(n) 不互质造成攻击者可以直接分解模数。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/RSA-4.jpg">
+<meta property="article:published_time" content="2021-08-29T12:20:13.000Z">
+<meta property="article:modified_time" content="2024-07-03T08:41:43.872Z">
+<meta property="article:author" content="Ron">
+<meta property="article:tag" content="CTF">
+<meta property="article:tag" content="Crypto">
+<meta property="article:tag" content="RSA">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/RSA-4.jpg"><link rel="shortcut icon" href="/img/favicon.ico"><link rel="canonical" href="https://qriosa.github.io/2021/08/29/25.RSA-e%E5%92%8C%CF%86(n)%E4%B8%8D%E4%BA%92%E8%B4%A8/"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="preconnect" href="//zz.bdstatic.com"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/instantsearch.js@2.10.5/dist/instantsearch.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/instantsearch.js@2.10.5/dist/instantsearch.min.js" defer></script><script>var GLOBAL_CONFIG = { 
+  root: '/',
+  algolia: {"appId":"YJRLD9BYXZ","apiKey":"6098438f46d523cb882b858aed7b9962","indexName":"blog","hits":{"per_page":6},"languages":{"input_placeholder":"搜索文章","hits_empty":"找不到您查询的内容：${query}","hits_stats":"找到 ${hits} 条结果，用时 ${time} 毫秒"}},
+  localSearch: undefined,
+  translate: undefined,
+  noticeOutdate: {"limitDay":365,"position":"top","messagePrev":"It has been","messageNext":"days since the last update, the content of the article may be outdated."},
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '天',
+  date_suffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"你已切换为繁体","cht_to_chs":"你已切换为简体","day_to_night":"你已切换为深色模式","night_to_day":"你已切换为浅色模式","bgLight":"#49b1f5","bgDark":"#121212","position":"bottom-left"},
+  source: {
+    jQuery: 'https://cdn.jsdelivr.net/npm/jquery@latest/dist/jquery.min.js',
+    justifiedGallery: {
+      js: 'https://cdn.jsdelivr.net/npm/justifiedGallery/dist/js/jquery.justifiedGallery.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/justifiedGallery/dist/css/justifiedGallery.min.css'
+    },
+    fancybox: {
+      js: 'https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@latest/dist/jquery.fancybox.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@latest/dist/jquery.fancybox.min.css'
+    }
+  },
+  isPhotoFigcaption: true,
+  islazyload: true,
+  isanchor: true
+};
+
+var saveToLocal = {
+  set: function setWithExpiry(key, value, ttl) {
+    const now = new Date()
+    const expiryDay = ttl * 86400000
+    const item = {
+      value: value,
+      expiry: now.getTime() + expiryDay,
+    }
+    localStorage.setItem(key, JSON.stringify(item))
+  },
+
+  get: function getWithExpiry(key) {
+    const itemStr = localStorage.getItem(key)
+
+    if (!itemStr) {
+      return undefined
+    }
+    const item = JSON.parse(itemStr)
+    const now = new Date()
+
+    if (now.getTime() > item.expiry) {
+      localStorage.removeItem(key)
+      return undefined
+    }
+    return item.value
+  }
+}
+
+// https://stackoverflow.com/questions/16839698/jquery-getscript-alternative-in-native-javascript
+const getScript = url => new Promise((resolve, reject) => {
+  const script = document.createElement('script')
+  script.src = url
+  script.async = true
+  script.onerror = reject
+  script.onload = script.onreadystatechange = function() {
+    const loadState = this.readyState
+    if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+    script.onload = script.onreadystatechange = null
+    resolve()
+  }
+  document.head.appendChild(script)
+})</script><script id="config_change">var GLOBAL_CONFIG_SITE = { 
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: true,
+  isToc: true,
+  postUpdate: '2024-07-03 16:41:43'
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(function () {  window.activateDarkMode = function () {
+    document.documentElement.setAttribute('data-theme', 'dark')
+    if (document.querySelector('meta[name="theme-color"]') !== null) {
+      document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+    }
+  }
+  window.activateLightMode = function () {
+    document.documentElement.setAttribute('data-theme', 'light')
+   if (document.querySelector('meta[name="theme-color"]') !== null) {
+      document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+    }
+  }
+  const autoChangeMode = '1'
+  const t = saveToLocal.get('theme')
+  if (autoChangeMode === '1') {
+    const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches
+    const isLightMode = window.matchMedia('(prefers-color-scheme: light)').matches
+    const isNotSpecified = window.matchMedia('(prefers-color-scheme: no-preference)').matches
+    const hasNoSupport = !isDarkMode && !isLightMode && !isNotSpecified
+    if (t === undefined) {
+      if (isLightMode) activateLightMode()
+      else if (isDarkMode) activateDarkMode()
+      else if (isNotSpecified || hasNoSupport) {
+        const now = new Date()
+        const hour = now.getHours()
+        const isNight = hour <= 6 || hour >= 18
+        isNight ? activateDarkMode() : activateLightMode()
+      }
+      window.matchMedia('(prefers-color-scheme: dark)').addListener(function (e) {
+        if (saveToLocal.get('theme') === undefined) {
+          e.matches ? activateDarkMode() : activateLightMode()
+        }
+      })
+    } else if (t === 'light') activateLightMode()
+    else activateDarkMode()
+  } else if (autoChangeMode === '2') {
+    const now = new Date()
+    const hour = now.getHours()
+    const isNight = hour <= 6 || hour >= 18
+    if (t === undefined) isNight ? activateDarkMode() : activateLightMode()
+    else if (t === 'light') activateLightMode()
+    else activateDarkMode()
+  } else {
+    if (t === 'dark') activateDarkMode()
+    else if (t === 'light') activateLightMode()
+  }const asideStatus = saveToLocal.get('aside-status')
+if (asideStatus !== undefined) {
+   if (asideStatus === 'hide') {
+     document.documentElement.classList.add('hide-aside')
+   } else {
+     document.documentElement.classList.remove('hide-aside')
+   }
+}const fontSizeVal = saveToLocal.get('global-font-size')
+if (fontSizeVal !== undefined) {
+  document.documentElement.style.setProperty('--global-font-size', fontSizeVal + 'px')
+}})()</script><meta name="generator" content="Hexo 5.3.0"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="author-avatar"><img class="avatar-img" data-lazy-src="/img/kid.jpg" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data"><div class="data-item is-center"><div class="data-item-link"><a href="/archives/"><div class="headline">文章</div><div class="length-num">31</div></a></div></div><div class="data-item is-center"><div class="data-item-link"><a href="/tags/"><div class="headline">标签</div><div class="length-num">58</div></a></div></div><div class="data-item is-center"><div class="data-item-link"><a href="/categories/"><div class="headline">分类</div><div class="length-num">6</div></a></div></div></div><hr/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 时间轴</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> 关于</span></a></div></div></div></div><div id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/RSA-4.jpg)"><nav id="nav"><span id="blog_name"><a id="site-name" href="/">Ron's Blog</a></span><div id="menus"><div id="search-button"><a class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 时间轴</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> 关于</span></a></div></div><div id="toggle-menu"><a class="site-page"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="post-info"><h1 class="post-title">RSA-4 e 和 ɸ(n) 不互质</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2021-08-29T12:20:13.000Z" title="发表于 2021-08-29 20:20:13">2021-08-29</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2024-07-03T08:41:43.872Z" title="更新于 2024-07-03 16:41:43">2024-07-03</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/CTF/">CTF</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">字数总计:</span><span class="word-count">2.7k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>11分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">阅读量:</span><span id="busuanzi_value_page_pv"></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><h2 id="知识点"><a href="#知识点" class="headerlink" title="知识点"></a>知识点</h2><h3 id="逆元存在的充要条件"><a href="#逆元存在的充要条件" class="headerlink" title="逆元存在的充要条件"></a>逆元存在的充要条件</h3><p>根据<a target="_blank" rel="noopener" href="https://zh.wikipedia.org/wiki/%E8%B2%9D%E7%A5%96%E7%AD%89%E5%BC%8F">裴蜀定理</a>线性方程 $ax+by = d$​​​​ 有解的充要条件是 $\gcd(a,b)|d$​​​​ , 即 $d = k \times \gcd(a,b)$​​。</p>
+<p>若 $a$ 和 $b$ 不互质，则 $\gcd(a,b)&gt;1$ ，此时对于 $\forall (x,y)\in R^2$ ，满足 $ax+by=d$ 都有 $ax+by=d\geq\gcd(a,b)&gt;1$。</p>
+<p>于是，不妨可以设 $d &lt; b$ ，因为如果 $d \geq b$ 可以通过 $y = y+1, d = d - b$ 直到满足 $d &lt; b$ 。</p>
+<p>再两侧同时对 $b$ 取余有：</p>
+<script type="math/tex; mode=display">
+ax+by \equiv d \pmod b \\
+ax \equiv d \pmod b</script><p>所以对任意 $x$​ 有</p>
+<script type="math/tex; mode=display">
+1 < ax \equiv d < b \pmod b</script><p>所以，此时 $a$ 和 $b$ 互相关于对方无逆元。</p>
+<p>即 $a$ 和 $b$ 关于对方存在逆元从充要条件是 $\gcd(a,b) = 1$ 。</p>
+<h3 id="扩展欧几里得算法"><a href="#扩展欧几里得算法" class="headerlink" title="扩展欧几里得算法"></a>扩展欧几里得算法</h3><p><a target="_blank" rel="noopener" href="https://zh.wikipedia.org/wiki/%E6%89%A9%E5%B1%95%E6%AC%A7%E5%87%A0%E9%87%8C%E5%BE%97%E7%AE%97%E6%B3%95">扩展欧几里得算法</a>就是在<a target="_blank" rel="noopener" href="https://zh.wikipedia.org/wiki/%E8%BC%BE%E8%BD%89%E7%9B%B8%E9%99%A4%E6%B3%95">辗转相除法</a>求最大公因数的情况下进行改进，使得该算法能够求出上面逆元分析中的线性方程的解 $x,y$ 。进一步，也就可以通过这个来求解逆元。</p>
+<h4 id="辗转相除法"><a href="#辗转相除法" class="headerlink" title="辗转相除法"></a>辗转相除法</h4><p>这个比较简单，核心思想就是 $\gcd(a,b) = \gcd(a, b\%a)$ 。</p>
+<p>代码如下：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">gcd</span>(<span class="params">a, b</span>):</span></span><br><span class="line">    <span class="keyword">while</span> b:</span><br><span class="line">        a, b = b, a%b</span><br><span class="line">    <span class="keyword">return</span> a</span><br></pre></td></tr></table></figure>
+<h4 id="扩展欧几里得算法-1"><a href="#扩展欧几里得算法-1" class="headerlink" title="扩展欧几里得算法"></a>扩展欧几里得算法</h4><p>上述在求解的过程中抛弃了商，只保留了余数，如果我们将商也利用起来，则可以顺便得到方程组的解 $x,y$ 。</p>
+<p>考虑上述算法的终止条件 $b_n == 0$​​ ，我们用下标来区分，第 $i$​ 轮 <code>while</code> 迭代中的参数为 $a_i,b_i$​​ ，终止时为第 $n$​ 轮， 设 $\gcd(a_0, b_0) = d$ 。</p>
+<p>此时方程 $a_nx_n+b_ny_n = d$​​ 即是 $d \times x_n + 0 = d$​​ 显然这个解是 $x_n = 1, y_n \in R$​​ 不妨取 $y_n=0$ 计算更简单​ 。</p>
+<p>而两层迭代之间有 $a<em>{i+1} = b_i, b</em>{i+1}=a_i \%b_i = a_i- \lfloor \frac{a_i}{b_i} \rfloor \times b_i$​ 。所以对于第 $i-1$​​ 轮的解为：</p>
+<script type="math/tex; mode=display">
+a_ix_i+b_iy_i=d \\
+b_{i-1}x_i+(a_{i-1}- \lfloor \frac{a_{i-1}}{b_{i-1}} \rfloor \times b_{i-1})y_i = d \\
+a_{i-1}y_i+b_{i-1}(x_i-\lfloor \frac{a_{i-1}}{b_{i-1}} \rfloor \times y_i) = d</script><p> 再观察上述式子与 $a<em>ix_i+b_iy_i = d$ 的关系，显然有 $(y_i, x_i-\lfloor \frac{a</em>{i-1}}{b<em>{i-1}} \rfloor \times y_i)$ 为 $(x</em>{i-1}, y_{i-1})$ 的一组解。</p>
+<p>于是就构建出了 $x<em>i, y_i$ 与 $x</em>{i-1}, y_{i-1}$ 之间的递推关系。</p>
+<p>由于已知 $x_n=1, y_n = 0$ ，于是可以得到最初的 $x_0, y_0$ 使得 $a_0x_0+b_0y_0 = d$ 。（事实上，中间的任意一组方程都是求出对应的解了</p>
+<p>代码如下：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">ex_gcd</span>(<span class="params">a, b</span>):</span></span><br><span class="line">    <span class="keyword">if</span> b == <span class="number">0</span>:</span><br><span class="line">        <span class="keyword">return</span> a, <span class="number">1</span>, <span class="number">0</span></span><br><span class="line">    d, x, y = ex_gcd(b, a%b)</span><br><span class="line">    <span class="keyword">return</span> d, y, x - y*(a//b)</span><br></pre></td></tr></table></figure>
+<h3 id="中国剩余定理-（Chinese-Remainder-Theorem-CRT）"><a href="#中国剩余定理-（Chinese-Remainder-Theorem-CRT）" class="headerlink" title="中国剩余定理 （Chinese Remainder Theorem, CRT）"></a>中国剩余定理 （Chinese Remainder Theorem, CRT）</h3><blockquote>
+<p>这里只做简单是介绍，更多更详细的资料可以查阅更多的相关资料。如 <a target="_blank" rel="noopener" href="https://zh.wikipedia.org/wiki/%E4%B8%AD%E5%9B%BD%E5%89%A9%E4%BD%99%E5%AE%9A%E7%90%86">百科</a>， <a target="_blank" rel="noopener" href="https://oi-wiki.org/math/number-theory/crt/">OI Wiki</a> 等。</p>
+<p>中国剩余定理，又称中国余数定理，是数论中的一个关于一元线性同余方程组的定理，说明了一元线性同余方程组有解的准则以及求解方法。也称为孙子定理，古有“韩信点兵”、“孙子定理”、“求一术”（宋 沈括）、“鬼谷算”（宋 周密）、“隔墻算”（宋 周密）、“剪管术”（宋 杨辉）、“秦王暗点兵”、“物不知数”之名。</p>
+</blockquote>
+<h4 id="一般-CRT"><a href="#一般-CRT" class="headerlink" title="一般 CRT"></a>一般 CRT</h4><p>在数学上，中国剩余定理可用来对一元线性同余方程组求解。</p>
+<p>设有如下方程组：</p>
+<script type="math/tex; mode=display">
+x \equiv b_1 \pmod {m_1} \\
+x \equiv b_2 \pmod {m_2} \\
+\vdots \\
+x \equiv b_n \pmod {m_n} \\</script><p>其中 $m_1, m_2, \cdots, m_n$​ <strong>两两互质</strong>。</p>
+<p>求解 $x$ （mod 意义下。</p>
+<p>算法实现流程如下：</p>
+<ol>
+<li>计算 $M = \prod_{i=1}^{n} m_i$ 。</li>
+<li>计算 $M_{i} = M \div m_i$​​ 。</li>
+<li>计算每个 $M_i$ 模 $m_i$ 意义下的逆元，$M_i^{-1}$​ ， 即 $M_i \times M_i^{-1} \equiv 1 \pmod {m_i}$。</li>
+<li>则解为 $x \equiv (\sum_{i=1}^nb_i \times M_i \times M_i^{-1}) \pmod M$​​ 。</li>
+</ol>
+<h4 id="进阶-CRT"><a href="#进阶-CRT" class="headerlink" title="进阶 CRT"></a>进阶 CRT</h4><p>细心的同学可能发现了，上述要求所有模数两两互质。那要是模数不互质咋办呢？</p>
+<p>这里简答起见，我们考虑一个只有两组方程的方程组</p>
+<script type="math/tex; mode=display">
+x \equiv b_1 \pmod {m_1} \\
+x \equiv b_2 \pmod {m_2} \\
+\gcd(m_1, m_2) = d > 1</script><p>将同余方程拆分开就是</p>
+<script type="math/tex; mode=display">
+x = k_1m_1+b_1 \\
+x = k_2m_2+b_2 \\</script><p>于是就是有:</p>
+<script type="math/tex; mode=display">
+x = k_1m_1+b_1=k_2m_2+b_2</script><script type="math/tex; mode=display">
+k_1m_1-k_2m_2 = b_2-b_1</script><p>显然上述式子中，未知量只有 $k_1, k_2$ 那么这个就和前面扩展欧几里得定理处求解很像了。</p>
+<p>首先是根据裴蜀定理可以判断上述方程有无解 $k_1, k_2$ 。</p>
+<ol>
+<li>若 $\gcd(m_1, m_2)\nmid(b_2-b_1)$ 则上述方程无解。无这样的 $k_1, k_2$ 。</li>
+<li>否则 $\gcd(m_1, m_2) | (b_2-b_1)$ 。</li>
+</ol>
+<p>不妨设 $d=\gcd(m_1, m_2), p_1=\frac{m_1}{d}, p_2=\frac{m_2}{d}$​ 则显然有 $\gcd(p_1,p_2)=1$​ 。于是上述的式子(8)可以改写为：</p>
+<script type="math/tex; mode=display">
+k_1p_1d-k_2p_2d=b_2-b_1</script><p>显然有 $d|(b_2-b_1)$​​ 移项：</p>
+<script type="math/tex; mode=display">
+k_1p_1-k_2p_2=\frac{b_2-b_1}{d}</script><p>注意，此时我们可以通过扩展欧几里得算法求得 $\lambda_1p_1+\lambda_2p_2=\gcd(p_1, p_2)=1$ 的解，。</p>
+<p>然后我们就可以求出解 $k_1, k_2$​​​ ：</p>
+<script type="math/tex; mode=display">
+k_1 = \lambda_1 \frac{b_2-b_1}{d} \\
+k_2 = -\lambda_2 \frac{b_2-b_1}{d} \\</script><p>然后就可以求出一个 $x_0 = k_1m_1+b_1=k_2m_2+b_2$​​​ 。</p>
+<p>至此，求出了一个特解 $x_0$​ 满足 </p>
+<script type="math/tex; mode=display">
+x \equiv b_1 \pmod {m_1} \\
+x \equiv b_2 \pmod {m_2} \\
+\gcd(m_1, m_2) = d > 1</script><blockquote>
+<p>注意，我们扩展欧几里得在求解的时候，在最底层应有无数的解，但是我随便取了一个，所以，上述只求出了满足条件的一个特解。</p>
+</blockquote>
+<p>那么怎么通过这个特解，求出整个系统的通解呢？</p>
+<p>【定理】若特解 $x^<em>$​ 满足 $\left{\begin{aligned}x \equiv b_1 \pmod {m_1} \x \equiv b_2 \pmod {m_2} \\end{aligned}\right.$​​ ，则次方程组的通解为 $x \equiv x^</em> \pmod {lcm(m_1, m_2)}$​ 。</p>
+<p>于是带入算出的特解，就得到了整个系统的通解。</p>
+<h2 id="例题"><a href="#例题" class="headerlink" title="例题"></a>例题</h2><h3 id="例题1：-公因数很小"><a href="#例题1：-公因数很小" class="headerlink" title="例题1： 公因数很小"></a>例题1： 公因数很小</h3><h4 id="题目"><a href="#题目" class="headerlink" title="题目"></a>题目</h4><blockquote>
+<p>听说你很精通 RSA ？那就来试试看能不能做这个没逆元的？ Hint：尝试分解 n</p>
+</blockquote>
+<p>相关参数如下：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">n = <span class="number">120491671787933729108476194499163893083968394949480049348379043767491627464410199840078276245663859992488865559032791822655853112057011464674557659165084137380631278392220470111199965143379980865414123358817375632106316573096730462759256552038388575491439398156732752820948140205779064855154444424679543904391</span></span><br><span class="line">e = <span class="number">114514</span></span><br><span class="line">c = <span class="number">20100559695786380165543276753317453339114462887841359032521636408859468898264655335976093030363436298893961749986818846989274322114843486483713324869965481532264205834518440113655367569454640827971202315045567994694492715253960421748489855434739974419985803248970262223208108796427123217251097716080236041732</span></span><br></pre></td></tr></table></figure>
+<h4 id="题解"><a href="#题解" class="headerlink" title="题解"></a>题解</h4><p>题目中给出的提示是试试分解 $n$​ ，于是尝试用 <code>yafu</code> 分解一下。一瞬就分解成功了（考点不在这里：</p>
+<p><img src= "/img/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/image-20210812103415267.png" alt="yafu分解成功"></p>
+<p>得到了 $p$ 和 $q$ 问题岂不是就迎刃而解了？</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">p = <span class="number">10976869853830541299248580771590130854083144580361242433420557921001130284636980035565212361371611364833259444556280104416743087841023122428538312427943473</span></span><br><span class="line">q = <span class="number">10976869853830541299248580771590130854083144580361242433420557921001130284636980035565212361371611364833259444556280104416743087841023122428538312427942967</span></span><br></pre></td></tr></table></figure>
+<p>但是如果按照之前的做法就会遇见下面的这个报错，提示逆元不存在：</p>
+<p><img src= "/img/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/image-20210812103716041.png" alt="乘法逆元不存在"></p>
+<p>事实上，计算一波就知道 $\gcd(e, \varphi(n)) = 2 &gt; 1$ 确实逆元不存在。这可咋整？</p>
+<p>根据前面的扩展欧几里得算法，可以很轻松地找出一个 $d$​ 使得 $e\times d=\gcd(e, \varphi(n)) = 2$​ 。</p>
+<p>再根据 RSA 算法的基本计算原理可以得知，此时， $c^{d} \equiv m^2 \pmod n$​ 。</p>
+<blockquote>
+<script type="math/tex; mode=display">
+\because e \times d \equiv 2 \pmod {\varphi(n)} \\
+\therefore e \times d = k \times \varphi(n) + 2, k \in Z \\
+\because gcd(m, n) = 1 \\
+\therefore m^{\varphi(n)}\equiv 1 \pmod n \ ······\ Euler's\ theorem\\
+\because c = m^e \mod n \\
+\therefore c^d \equiv (m^e)^d \equiv m ^ {e \times d} \equiv m^{k \times \varphi(n) + 2} \equiv m^2 \times ({m^{\varphi(n)}})^k \equiv m^2 \times 1^k \equiv m^2 \pmod n \\</script></blockquote>
+<p>那么再开平方根，可以用前面的费马分解类似的方法进行求解即可，<strong>理论上会存在两个解，但是逐一尝试就可以了</strong>。</p>
+<p>解密脚本如下：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> gmpy2</span><br><span class="line"><span class="keyword">from</span> Crypto.Util.number <span class="keyword">import</span> long_to_bytes</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">ex_gcd</span>(<span class="params">a, b</span>):</span></span><br><span class="line">    <span class="keyword">if</span> b == <span class="number">0</span>:</span><br><span class="line">        <span class="keyword">return</span> a, <span class="number">1</span>, <span class="number">0</span></span><br><span class="line">    d, x, y = ex_gcd(b, a%b)</span><br><span class="line">    <span class="keyword">return</span> d, y, x - y*(a//b)</span><br><span class="line"></span><br><span class="line">n = <span class="number">120491671787933729108476194499163893083968394949480049348379043767491627464410199840078276245663859992488865559032791822655853112057011464674557659165084137380631278392220470111199965143379980865414123358817375632106316573096730462759256552038388575491439398156732752820948140205779064855154444424679543904391</span></span><br><span class="line">e = <span class="number">114514</span></span><br><span class="line">c = <span class="number">20100559695786380165543276753317453339114462887841359032521636408859468898264655335976093030363436298893961749986818846989274322114843486483713324869965481532264205834518440113655367569454640827971202315045567994694492715253960421748489855434739974419985803248970262223208108796427123217251097716080236041732</span></span><br><span class="line"></span><br><span class="line">p = <span class="number">10976869853830541299248580771590130854083144580361242433420557921001130284636980035565212361371611364833259444556280104416743087841023122428538312427943473</span></span><br><span class="line">q = <span class="number">10976869853830541299248580771590130854083144580361242433420557921001130284636980035565212361371611364833259444556280104416743087841023122428538312427942967</span></span><br><span class="line"></span><br><span class="line">phi = (p-<span class="number">1</span>)*(q-<span class="number">1</span>)</span><br><span class="line"></span><br><span class="line">_, d, __ = ex_gcd(e, phi)</span><br><span class="line">d %= phi <span class="comment"># 取正的</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">assert</span> e*d % phi == gmpy2.gcd(e, phi)</span><br><span class="line"></span><br><span class="line">m2 = <span class="built_in">pow</span>(c, d, n)</span><br><span class="line"></span><br><span class="line"><span class="comment"># format </span></span><br><span class="line"><span class="comment"># 这个阈值也是随便设的 能爆出来就行 所以尽量大</span></span><br><span class="line"><span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">1</span>&lt;&lt;<span class="number">30</span>):</span><br><span class="line">    r = gmpy2.iroot(m2+i*n, <span class="number">2</span>)</span><br><span class="line">    <span class="keyword">if</span> r[<span class="number">1</span>]:</span><br><span class="line">        <span class="comment"># print(r[0])</span></span><br><span class="line">        <span class="keyword">break</span></span><br><span class="line">m = r[<span class="number">0</span>]</span><br><span class="line"></span><br><span class="line">flag = long_to_bytes(m)</span><br><span class="line">print(flag)</span><br><span class="line"><span class="comment"># b&#x27;flag&#123;baby_RSA_e_phi_not_coprime&#125;&#x27;</span></span><br></pre></td></tr></table></figure>
+<h3 id="例题2：公因数不是那么小"><a href="#例题2：公因数不是那么小" class="headerlink" title="例题2：公因数不是那么小"></a>例题2：公因数不是那么小</h3><h4 id="题目-1"><a href="#题目-1" class="headerlink" title="题目"></a>题目</h4><blockquote>
+<p>听说你完成了没有逆元的 RSA，那再来看看这个!</p>
+</blockquote>
+<p>题目数据如下</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">n1 = <span class="number">145902412361478782344770381873783700413638083575664796147183684992615987925480426688706400688307583005196450858827113757408777361940584125700594767997877530445777012630266331221234501260829837820315200747919668506933176146599166089445798737129024362167061966283411487243534460764772316650320961711082540676899</span></span><br><span class="line">e1 = <span class="number">1027642</span></span><br><span class="line">c1 = <span class="number">145599749068981747615735527132763322497511927333435440286556586440700880156616855875705194707404376786136517540004760807637963195264918622629767468410395993222984750343835317265657642066985400345308564185485762783798378213615456853641873967743113774281508530109771993747380075137571629299980431535183973047761</span> </span><br><span class="line"></span><br><span class="line">n2 =<span class="number">149099187170511972630955070342575714830336629001429055523308641067867185643738492089983321303377141971663123411968339764579768625561000509534051657156505686277638053591553620131562538158327446457847814787147698749502556552831112070838138070024147578824279983531049306936118687161116949990664307619657857322083</span></span><br><span class="line">e2 = <span class="number">2072238</span></span><br><span class="line">c2 = <span class="number">120008213052657974749407574322061865802530371140787421373712117963589562586158574291255627693566218561032563852324558823021648758372467762769424392909644546747637434681882739238686051912069497299223106307867125393298991125534662447166531892395781655435572658429514851281851805554254667625969745870072913201081</span></span><br></pre></td></tr></table></figure>
+<h4 id="题解-1"><a href="#题解-1" class="headerlink" title="题解"></a>题解</h4><p>根据题目提示，我们通过 factordb 查询到了 $n$​​ 的分解。我们根据求公因数完成对 $n_1, n_2$​ 的分解。</p>
+<blockquote>
+<p>PS: 这个部分将在下一部分中详细介绍：公因子唯密文攻击</p>
+</blockquote>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">In [<span class="number">1</span>]: gmpy2.gcd(n1, n2)</span><br><span class="line">Out[<span class="number">1</span>]: mpz(<span class="number">12120327527644543811107783655014863098833219936714394976342507913322405566177432644931575840816861543106701611662013978324877080018872656490603706071067111</span>)</span><br></pre></td></tr></table></figure>
+<p>于是就可以完成分解</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">p = <span class="number">12120327527644543811107783655014863098833219936714394976342507913322405566177432644931575840816861543106701611662013978324877080018872656490603706071067111</span></span><br><span class="line">q1 = <span class="number">12037827528067911684278967221392433256129944002157200272548317200308481572950474775891360447285969682243206009995242277136633522897723532096467191105943909</span></span><br><span class="line"></span><br><span class="line">p = <span class="number">12120327527644543811107783655014863098833219936714394976342507913322405566177432644931575840816861543106701611662013978324877080018872656490603706071067111</span></span><br><span class="line">q2 = <span class="number">12301580698247665838432962460247894405698817646605188562297985838079356879336309758823376086396761749681729993573203954506346863479448531269351981555913253</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>那岂不是一瞬就可以完成了，但是显然不是。这里也是没有逆元存在的， $\gcd(e, \varphi(n)) = 14$​​ 。(两组都是)</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">In [<span class="number">1</span>]: gmpy2.gcd(e1, (p1-<span class="number">1</span>)*(q1-<span class="number">1</span>))</span><br><span class="line">Out[<span class="number">1</span>]: mpz(<span class="number">14</span>)</span><br><span class="line">    </span><br><span class="line">In [<span class="number">2</span>]: gmpy2.gcd(e2, (p2-<span class="number">1</span>)*(q2-<span class="number">1</span>))</span><br><span class="line">Out[<span class="number">2</span>]: mpz(<span class="number">14</span>)</span><br></pre></td></tr></table></figure>
+<p>那岂不是可以和前面一样，先用扩展欧几里得来求一个解，再开方？ $14$ 次方，可有点不敢恭维。（虽然也不是不能开，因为理论上会开出来 $\gcd(e, \varphi(n)) = 14$ 个根，再一一试，很不优雅。</p>
+<p>那这里和前面有些许不同，这里是有两组等式的，换言之，写出来如下：</p>
+<script type="math/tex; mode=display">
+m^{14} \equiv a_1 \pmod {n_1} \\ 
+m^{14} \equiv a_2 \pmod {n_2} \\</script><p>其中， $a_1, a_2$​ 就是按照前面的方式求出来的需要开 $14$​​​ 次方的值。那么看着这两个方程是不是和前面的 CRT 很像呢？只是刚刚好不互质。</p>
+<p>使用上面的公式计算一组特解 $x_0$​，这里 $b_1=a_1, b_2=a_2, d = \gcd(n_1,n_2) = p, p_1=q_1, p_2=q_2$​​ 。</p>
+<p>但是 $m^{14} \equiv x_0 \pmod {pq_1q_2}$​​ ，并不是关于 $n_1$​ 或者 $n_2$​ 的。</p>
+<p>此时问题转化为求解一个新的 RSA 问题了：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">e &#x3D; 14</span><br><span class="line">c &#x3D; x0</span><br><span class="line">n &#x3D; p*q1*q2</span><br></pre></td></tr></table></figure>
+<p>但是新的 $\gcd(e’,\varphi(pq_1q_2)) = 14 = e$​​​​​ !!!! 搞了半天求了个寂寞。</p>
+<p>不过别慌， 因为 $m^{14} \equiv x_0 \pmod {pq_1q_2}$ </p>
+<p>所以： $m^{14} \equiv x_0 \pmod {pq_1} \equiv m^{14} \equiv x_0 \pmod {pq_2} \equiv m^{14} \equiv x_0 \pmod {q_1q_2}$​​ </p>
+<p>前两组就是本题中的 $n_1, n_2$ 所以不予考虑，不妨来考虑第三组，此时的 RSA 问题是：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">e &#x3D; 14</span><br><span class="line">c &#x3D; x0</span><br><span class="line">n &#x3D; q1*q2</span><br></pre></td></tr></table></figure>
+<p> 再计算一下，发现 $\gcd(e’, \varphi(q_1q_2)) = 2$​​  ，好的，这就可以用前面的方法，开方进行解决了。</p>
+<p>解密代码如下：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> gmpy2</span><br><span class="line"><span class="keyword">from</span> Crypto.Util.number <span class="keyword">import</span> long_to_bytes</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">ex_gcd</span>(<span class="params">a, b</span>):</span></span><br><span class="line">    <span class="keyword">if</span> b == <span class="number">0</span>:</span><br><span class="line">        <span class="keyword">return</span> a, <span class="number">1</span>, <span class="number">0</span></span><br><span class="line">    d, x, y = ex_gcd(b, a%b)</span><br><span class="line">    <span class="keyword">return</span> d, y, x - y*(a//b)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">n1 = <span class="number">145902412361478782344770381873783700413638083575664796147183684992615987925480426688706400688307583005196450858827113757408777361940584125700594767997877530445777012630266331221234501260829837820315200747919668506933176146599166089445798737129024362167061966283411487243534460764772316650320961711082540676899</span></span><br><span class="line">e1 = <span class="number">1027642</span></span><br><span class="line">c1 = <span class="number">145599749068981747615735527132763322497511927333435440286556586440700880156616855875705194707404376786136517540004760807637963195264918622629767468410395993222984750343835317265657642066985400345308564185485762783798378213615456853641873967743113774281508530109771993747380075137571629299980431535183973047761</span> </span><br><span class="line"></span><br><span class="line">n2 =<span class="number">149099187170511972630955070342575714830336629001429055523308641067867185643738492089983321303377141971663123411968339764579768625561000509534051657156505686277638053591553620131562538158327446457847814787147698749502556552831112070838138070024147578824279983531049306936118687161116949990664307619657857322083</span></span><br><span class="line">e2 = <span class="number">2072238</span></span><br><span class="line">c2 = <span class="number">120008213052657974749407574322061865802530371140787421373712117963589562586158574291255627693566218561032563852324558823021648758372467762769424392909644546747637434681882739238686051912069497299223106307867125393298991125534662447166531892395781655435572658429514851281851805554254667625969745870072913201081</span></span><br><span class="line"></span><br><span class="line">p = <span class="number">12120327527644543811107783655014863098833219936714394976342507913322405566177432644931575840816861543106701611662013978324877080018872656490603706071067111</span></span><br><span class="line">q1 = <span class="number">12037827528067911684278967221392433256129944002157200272548317200308481572950474775891360447285969682243206009995242277136633522897723532096467191105943909</span></span><br><span class="line">q2 = <span class="number">12301580698247665838432962460247894405698817646605188562297985838079356879336309758823376086396761749681729993573203954506346863479448531269351981555913253</span></span><br><span class="line"></span><br><span class="line">phi1 = (p-<span class="number">1</span>)*(q1-<span class="number">1</span>)</span><br><span class="line">phi2 = (p-<span class="number">1</span>)*(q2-<span class="number">1</span>)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment"># 求 a1 a2</span></span><br><span class="line">_, d1, __ = ex_gcd(e1, phi1)</span><br><span class="line">_, d2, __ = ex_gcd(e2, phi2)</span><br><span class="line"></span><br><span class="line">d1 %= phi1 <span class="comment"># 取正的</span></span><br><span class="line">d2 %= phi2 <span class="comment"># 取正的</span></span><br><span class="line"></span><br><span class="line">a1 = <span class="built_in">pow</span>(c1, d1, n1)</span><br><span class="line">a2 = <span class="built_in">pow</span>(c2, d2, n2)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 通过求 k 求特解</span></span><br><span class="line">gcd_, lambda1, lambda2 = ex_gcd(q1, q2)</span><br><span class="line"><span class="keyword">assert</span> gcd_ == lambda1*q1+lambda2*q2</span><br><span class="line"><span class="keyword">assert</span> (a1-a2) % p == <span class="number">0</span></span><br><span class="line">k1 = lambda1*(a2-a1) // p</span><br><span class="line">k2 = lambda2*(-(a2-a1)) // p</span><br><span class="line"><span class="keyword">assert</span> (k1*n1+a1)%(p*q1*q2) == (k2*n2+a2)%(p*q1*q2)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 特解 c = x0 = m^14</span></span><br><span class="line">m14 = (k1*n1+a1)%(p*q1*q2)</span><br><span class="line"><span class="comment"># e = 14</span></span><br><span class="line">e = <span class="number">14</span></span><br><span class="line"><span class="comment"># phi</span></span><br><span class="line">phi = (q1-<span class="number">1</span>)*(q2-<span class="number">1</span>)</span><br><span class="line"><span class="comment"># n</span></span><br><span class="line">n = q1 * q2</span><br><span class="line">_, d, __ = ex_gcd(e, phi)</span><br><span class="line">d %= phi <span class="comment"># 取正的</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># m^2</span></span><br><span class="line">m2 = <span class="built_in">pow</span>(m14, d, n)</span><br><span class="line"></span><br><span class="line"><span class="comment"># format </span></span><br><span class="line"><span class="comment"># 这个阈值也是随便设的 能爆出来就行 所以尽量大</span></span><br><span class="line"><span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">1</span>&lt;&lt;<span class="number">30</span>):</span><br><span class="line">    r = gmpy2.iroot(m2+i*n, <span class="number">2</span>)</span><br><span class="line">    <span class="keyword">if</span> r[<span class="number">1</span>]:</span><br><span class="line">        <span class="comment"># print(r[0])</span></span><br><span class="line">        <span class="keyword">break</span></span><br><span class="line">m = r[<span class="number">0</span>]</span><br><span class="line"></span><br><span class="line">flag = long_to_bytes(m)</span><br><span class="line">print(flag)</span><br><span class="line"><span class="comment"># b&#x27;flag&#123;baby_RSA_e_phi_gcd_not_little&#125;&#x27;</span></span><br></pre></td></tr></table></figure>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta">文章作者: </span><span class="post-copyright-info"><a href="mailto:undefined">Ron</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta">文章链接: </span><span class="post-copyright-info"><a href="https://qriosa.github.io/2021/08/29/25.RSA-e%E5%92%8C%CF%86(n)%E4%B8%8D%E4%BA%92%E8%B4%A8/">https://qriosa.github.io/2021/08/29/25.RSA-e%E5%92%8C%CF%86(n)%E4%B8%8D%E4%BA%92%E8%B4%A8/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta">版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来自 <a href="https://qriosa.github.io" target="_blank">Ron's Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/CTF/">CTF</a><a class="post-meta__tags" href="/tags/Crypto/">Crypto</a><a class="post-meta__tags" href="/tags/RSA/">RSA</a></div><div class="post_share"><div class="addthis_inline_share_toolbox"></div><script src="//s7.addthis.com/js/300/addthis_widget.js#pubid=5fb3e45d5f9ff11c" async="async"></script></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i> 打赏<div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="/img/wechat.png" target="_blank"><img class="post-qr-code-img" data-lazy-src="/img/wechat.png" alt="wechat"/></a><div class="post-qr-code-desc">wechat</div></li><li class="reward-item"><a href="/img/alipay.png" target="_blank"><img class="post-qr-code-img" data-lazy-src="/img/alipay.png" alt="alipay"/></a><div class="post-qr-code-desc">alipay</div></li></ul></div></div></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/2021/09/01/26.RSA-%E5%85%AC%E5%9B%A0%E5%AD%90%E5%94%AF%E5%AF%86%E6%96%87%E6%94%BB%E5%87%BB/"><img class="prev-cover" data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/RSA-5.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="pagination-info"><div class="label">上一篇</div><div class="prev_info">RSA-5 公因子唯密文攻击</div></div></a></div><div class="next-post pull-right"><a href="/2021/08/25/24.RSA-n%E5%A4%9A%E8%B4%A8%E5%9B%A0%E6%95%B0%E6%94%BB%E5%87%BB/"><img class="next-cover" data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/RSA-3.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">RSA-3 模数 n 多质因数攻击</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span> 相关推荐</span></div><div class="relatedPosts-list"><div><a href="/2021/08/22/23.RSA-因子差异过大或过小/" title="RSA-2 因子差异过大或过小"><img class="cover" data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/RSA-2.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2021-08-22</div><div class="title">RSA-2 因子差异过大或过小</div></div></a></div><div><a href="/2021/08/20/22.RSA-直接分解/" title="RSA-1 直接分解模数"><img class="cover" data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/RSA-1.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2021-08-20</div><div class="title">RSA-1 直接分解模数</div></div></a></div><div><a href="/2021/08/25/24.RSA-n多质因数攻击/" title="RSA-3 模数 n 多质因数攻击"><img class="cover" data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/RSA-3.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2021-08-25</div><div class="title">RSA-3 模数 n 多质因数攻击</div></div></a></div><div><a href="/2021/09/01/26.RSA-公因子唯密文攻击/" title="RSA-5 公因子唯密文攻击"><img class="cover" data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/RSA-5.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2021-09-01</div><div class="title">RSA-5 公因子唯密文攻击</div></div></a></div><div><a href="/2021/09/04/27.RSA-共模攻击/" title="RSA-6 共模攻击"><img class="cover" data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/RSA-6.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2021-09-04</div><div class="title">RSA-6 共模攻击</div></div></a></div><div><a href="/2021/09/11/28.RSA-低解密指数攻击/" title="RSA-7 低解密指数攻击"><img class="cover" data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/RSA-7.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2021-09-11</div><div class="title">RSA-7 低解密指数攻击</div></div></a></div></div></div><hr/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div class="vcomment" id="vcomment"></div></div></div></div></div><div class="aside_content" id="aside_content"><div class="card-widget card-info"><div class="card-content"><div class="card-info-avatar is-center"><img class="avatar-img" data-lazy-src="/img/kid.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/><div class="author-info__name">Ron</div><div class="author-info__description">retired OIer, Novice CTF Enthusiast</div></div><div class="card-info-data"><div class="card-info-data-item is-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">31</div></a></div><div class="card-info-data-item is-center"><a href="/tags/"><div class="headline">标签</div><div class="length-num">58</div></a></div><div class="card-info-data-item is-center"><a href="/categories/"><div class="headline">分类</div><div class="length-num">6</div></a></div></div><a class="button--animated" id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/LCX666"><i class="fab fa-github"></i><span>Follow Me</span></a><div class="card-info-social-icons is-center"><a class="social-icon" href="https://github.com/LCX666" target="_blank" title="Github"><i class="fab fa-github"></i></a><a class="social-icon" href="mailto:lucxer@qq.com" target="_blank" title="Email"><i class="fas fa-envelope"></i></a></div></div></div><div class="card-widget card-announcement"><div class="card-content"><div class="item-headline"><i class="fas fa-bullhorn card-announcement-animation"></i><span>公告</span></div><div class="announcement_content">号外！号外！号外！评论系统已开放！</div></div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="card-content"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%9F%A5%E8%AF%86%E7%82%B9"><span class="toc-number">1.</span> <span class="toc-text">知识点</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%80%86%E5%85%83%E5%AD%98%E5%9C%A8%E7%9A%84%E5%85%85%E8%A6%81%E6%9D%A1%E4%BB%B6"><span class="toc-number">1.1.</span> <span class="toc-text">逆元存在的充要条件</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%89%A9%E5%B1%95%E6%AC%A7%E5%87%A0%E9%87%8C%E5%BE%97%E7%AE%97%E6%B3%95"><span class="toc-number">1.2.</span> <span class="toc-text">扩展欧几里得算法</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E8%BE%97%E8%BD%AC%E7%9B%B8%E9%99%A4%E6%B3%95"><span class="toc-number">1.2.1.</span> <span class="toc-text">辗转相除法</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%89%A9%E5%B1%95%E6%AC%A7%E5%87%A0%E9%87%8C%E5%BE%97%E7%AE%97%E6%B3%95-1"><span class="toc-number">1.2.2.</span> <span class="toc-text">扩展欧几里得算法</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%AD%E5%9B%BD%E5%89%A9%E4%BD%99%E5%AE%9A%E7%90%86-%EF%BC%88Chinese-Remainder-Theorem-CRT%EF%BC%89"><span class="toc-number">1.3.</span> <span class="toc-text">中国剩余定理 （Chinese Remainder Theorem, CRT）</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%B8%80%E8%88%AC-CRT"><span class="toc-number">1.3.1.</span> <span class="toc-text">一般 CRT</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E8%BF%9B%E9%98%B6-CRT"><span class="toc-number">1.3.2.</span> <span class="toc-text">进阶 CRT</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BE%8B%E9%A2%98"><span class="toc-number">2.</span> <span class="toc-text">例题</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BE%8B%E9%A2%981%EF%BC%9A-%E5%85%AC%E5%9B%A0%E6%95%B0%E5%BE%88%E5%B0%8F"><span class="toc-number">2.1.</span> <span class="toc-text">例题1： 公因数很小</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E9%A2%98%E7%9B%AE"><span class="toc-number">2.1.1.</span> <span class="toc-text">题目</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E9%A2%98%E8%A7%A3"><span class="toc-number">2.1.2.</span> <span class="toc-text">题解</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BE%8B%E9%A2%982%EF%BC%9A%E5%85%AC%E5%9B%A0%E6%95%B0%E4%B8%8D%E6%98%AF%E9%82%A3%E4%B9%88%E5%B0%8F"><span class="toc-number">2.2.</span> <span class="toc-text">例题2：公因数不是那么小</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E9%A2%98%E7%9B%AE-1"><span class="toc-number">2.2.1.</span> <span class="toc-text">题目</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E9%A2%98%E8%A7%A3-1"><span class="toc-number">2.2.2.</span> <span class="toc-text">题解</span></a></li></ol></li></ol></li></ol></div></div></div><div class="card-widget card-recent-post"><div class="card-content"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/2021/10/05/31.%E4%B8%A4%E4%B8%AA%E5%AF%86%E7%A0%81%E9%A2%98/" title="两个有意思的题"><img data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/practice_3_crypto.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="两个有意思的题"/></a><div class="content"><a class="title" href="/2021/10/05/31.%E4%B8%A4%E4%B8%AA%E5%AF%86%E7%A0%81%E9%A2%98/" title="两个有意思的题">两个有意思的题</a><time datetime="2021-10-05T04:15:06.000Z" title="发表于 2021-10-05 12:15:06">2021-10-05</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2021/09/25/30.RSA-%E7%9B%B8%E5%85%B3%E6%B6%88%E6%81%AF%E6%94%BB%E5%87%BB/" title="RSA-9 Coppersmith 相关攻击"><img data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/RSA-9.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="RSA-9 Coppersmith 相关攻击"/></a><div class="content"><a class="title" href="/2021/09/25/30.RSA-%E7%9B%B8%E5%85%B3%E6%B6%88%E6%81%AF%E6%94%BB%E5%87%BB/" title="RSA-9 Coppersmith 相关攻击">RSA-9 Coppersmith 相关攻击</a><time datetime="2021-09-25T05:25:46.000Z" title="发表于 2021-09-25 13:25:46">2021-09-25</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2021/09/15/29.RSA-%E4%BD%8E%E5%8A%A0%E5%AF%86%E6%8C%87%E6%95%B0(%E5%B9%BF%E6%92%AD)%E6%94%BB%E5%87%BB/" title="RSA-8 低加密指数广播攻击"><img data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/RSA-8.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="RSA-8 低加密指数广播攻击"/></a><div class="content"><a class="title" href="/2021/09/15/29.RSA-%E4%BD%8E%E5%8A%A0%E5%AF%86%E6%8C%87%E6%95%B0(%E5%B9%BF%E6%92%AD)%E6%94%BB%E5%87%BB/" title="RSA-8 低加密指数广播攻击">RSA-8 低加密指数广播攻击</a><time datetime="2021-09-15T15:13:10.000Z" title="发表于 2021-09-15 23:13:10">2021-09-15</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2021/09/11/28.RSA-%E4%BD%8E%E8%A7%A3%E5%AF%86%E6%8C%87%E6%95%B0%E6%94%BB%E5%87%BB/" title="RSA-7 低解密指数攻击"><img data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/RSA-7.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="RSA-7 低解密指数攻击"/></a><div class="content"><a class="title" href="/2021/09/11/28.RSA-%E4%BD%8E%E8%A7%A3%E5%AF%86%E6%8C%87%E6%95%B0%E6%94%BB%E5%87%BB/" title="RSA-7 低解密指数攻击">RSA-7 低解密指数攻击</a><time datetime="2021-09-11T05:23:15.000Z" title="发表于 2021-09-11 13:23:15">2021-09-11</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2021/09/04/27.RSA-%E5%85%B1%E6%A8%A1%E6%94%BB%E5%87%BB/" title="RSA-6 共模攻击"><img data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/RSA-6.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="RSA-6 共模攻击"/></a><div class="content"><a class="title" href="/2021/09/04/27.RSA-%E5%85%B1%E6%A8%A1%E6%94%BB%E5%87%BB/" title="RSA-6 共模攻击">RSA-6 共模攻击</a><time datetime="2021-09-04T08:17:54.000Z" title="发表于 2021-09-04 16:17:54">2021-09-04</time></div></div></div></div></div></div></div></main><footer id="footer"><div id="footer-wrap"><div class="copyright">&copy;2020 - 2024 By Ron</div><div class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly</a></div><div class="footer_custom_text">Hi, welcome to my <a target="_blank" rel="noopener" href="https://lucxer.tech/">blog</a>!</div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="font-plus" type="button" title="放大字体"><i class="fas fa-plus"></i></button><button id="font-minus" type="button" title="缩小字体"><i class="fas fa-minus"></i></button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside_config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="直达评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><i class="fas fa-arrow-up"></i></button></div></div><div id="algolia-search"><div class="search-dialog"><div class="search-dialog__title" id="algolia-search-title">Algolia</div><div id="algolia-input-panel"><div id="algolia-search-input"></div></div><hr/><div id="algolia-search-results"><div id="algolia-hits"></div><div id="algolia-pagination"></div><div id="algolia-stats"></div></div><span class="search-close-button"><i class="fas fa-times"></i></span></div><div id="search-mask"></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page/instantpage.min.js" type="module"></script><script src="https://cdn.jsdelivr.net/npm/vanilla-lazyload/dist/lazyload.iife.min.js"></script><script src="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.js"></script><script>function panguFn () {
+  if (typeof pangu === 'object') pangu.spacingElementById('content-inner')
+  else {
+    getScript('https://cdn.jsdelivr.net/npm/pangu/dist/browser/pangu.min.js')
+      .then(() => {
+        pangu.spacingElementById('content-inner')
+      })
+  }
+}
+
+function panguInit () {
+  if (false){
+    GLOBAL_CONFIG_SITE.isPost && panguFn()
+  } else {
+    panguFn()
+  }
+}
+
+document.addEventListener('DOMContentLoaded', panguInit)</script><script src="/js/search/algolia.js"></script><script>var preloader = {
+  endLoading: () => {
+    document.body.style.overflow = 'auto';
+    document.getElementById('loading-box').classList.add("loaded")
+  },
+  initLoading: () => {
+    document.body.style.overflow = '';
+    document.getElementById('loading-box').classList.remove("loaded")
+
+  }
+}
+window.addEventListener('load',()=> {preloader.endLoading()})</script><div class="js-pjax"><script>if (!window.MathJax) {
+  window.MathJax = {
+    loader: {
+      source: {
+        '[tex]/amsCd': '[tex]/amscd'
+      }
+    },
+    tex: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"]],
+      tags: 'ams'
+    },
+    options: {
+      renderActions: {
+        findScript: [10, doc => {
+          for (const node of document.querySelectorAll('script[type^="math/tex"]')) {
+            const display = !!node.type.match(/; *mode=display/)
+            const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display)
+            const text = document.createTextNode('')
+            node.parentNode.replaceChild(text, node)
+            math.start = {node: text, delim: '', n: 0}
+            math.end = {node: text, delim: '', n: 0}
+            doc.math.push(math)
+          }
+        }, ''],
+        addClass: [200,() => {
+          document.querySelectorAll('mjx-container:not([display=\'true\']').forEach( node => {
+            const target = node.parentNode
+            if (!target.classList.contains('has-jax')) {
+              target.classList.add('mathjax-overflow')
+            }
+          })
+        }, '', false]
+      }
+    }
+  }
+  
+  const script = document.createElement('script')
+  script.src = 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js'
+  script.id = 'MathJax-script'
+  script.async = true
+  document.head.appendChild(script)
+} else {
+  MathJax.startup.document.state(0)
+  MathJax.texReset()
+  MathJax.typeset()
+}</script><script>function loadValine () {
+  function initValine () {
+    let initData = {
+      el: '#vcomment',
+      appId: 'bXVyoSRa1rEnCAScfAPp2a6J-MdYXbMMI',
+      appKey: 'MPmhrDo6YIbw4Ostjj3Dl18c',
+      placeholder: 'Please leave your footprints',
+      avatar: 'monsterid',
+      meta: 'nick,mail,link'.split(','),
+      pageSize: '10',
+      lang: 'en',
+      recordIP: false,
+      serverURLs: '',
+      emojiCDN: '',
+      emojiMaps: "",
+      enableQQ: false,
+      path: window.location.pathname,
+    }
+
+    if (true) { 
+      initData.requiredFields= ('nick,mail'.split(','))
+    }
+    
+    if (false) {
+      const otherData = false
+      initData = Object.assign({}, initData, otherData)
+    }
+    
+    const valine = new Valine(initData)
+  }
+
+  if (typeof Valine === 'function') initValine() 
+  else getScript('https://cdn.jsdelivr.net/npm/valine/dist/Valine.min.js').then(initValine)
+}
+
+if ('Valine' === 'Valine' || !true) {
+  if (true) btf.loadComment(document.querySelector('#vcomment'),loadValine)
+  else setTimeout(loadValine, 0)
+} else {
+  function loadOtherComment () {
+    loadValine()
+  }
+}</script><script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div><canvas class="fireworks" mobile="false"></canvas><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1/dist/fireworks.min.js"></script><script defer="defer" id="ribbon" src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1/dist/canvas-ribbon.min.js" size="150" alpha="0.6" zIndex="-1" mobile="false" data-click="false"></script><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1/dist/activate-power-mode.min.js"></script><script>POWERMODE.colorful = true;
+POWERMODE.shake = true;
+POWERMODE.mobile = false;
+document.body.addEventListener('input', POWERMODE);
+</script><script src="https://cdn.jsdelivr.net/npm/pjax/pjax.min.js"></script><script>let pjaxSelectors = [
+  'title',
+  '#config_change',
+  '#body-wrap',
+  '#rightside-config-hide',
+  '#rightside-config-show',
+  '.js-pjax'
+]
+
+if (false) {
+  pjaxSelectors.unshift('meta[property="og:image"]', 'meta[property="og:title"]', 'meta[property="og:url"]')
+}
+
+var pjax = new Pjax({
+  elements: 'a:not([target="_blank"])',
+  selectors: pjaxSelectors,
+  cacheBust: false,
+  analytics: false,
+  scrollRestoration: false
+})
+
+document.addEventListener('pjax:complete', function () {
+  window.refreshFn()
+
+  document.querySelectorAll('script[data-pjax]').forEach(item => {
+    const newScript = document.createElement('script')
+    const content = item.text || item.textContent || item.innerHTML || ""
+    Array.from(item.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value))
+    newScript.appendChild(document.createTextNode(content))
+    item.parentNode.replaceChild(newScript, item)
+  })
+
+  GLOBAL_CONFIG.islazyload && window.lazyLoadInstance.update()
+
+  typeof chatBtnFn === 'function' && chatBtnFn()
+  typeof panguInit === 'function' && panguInit()
+
+  if (typeof gtag === 'function') {
+    gtag('config', '', {'page_path': window.location.pathname});
+  }
+
+  typeof loadMeting === 'function' && document.getElementsByClassName('aplayer').length && loadMeting()
+
+  // Analytics
+  if (false) {
+    MtaH5.pgv()
+  }
+
+  // prismjs
+  typeof Prism === 'object' && Prism.highlightAll()
+
+  typeof preloader === 'object' && preloader.endLoading()
+})
+
+
+document.addEventListener('pjax:send', function () {
+  typeof preloader === 'object' && preloader.initLoading()
+  
+  if (window.aplayers) {
+    for (let i = 0; i < window.aplayers.length; i++) {
+      if (!window.aplayers[i].options.fixed) {
+        window.aplayers[i].destroy()
+      }
+    }
+  }
+
+  typeof typed === 'object' && typed.destroy()
+
+  //reset readmode
+  const $bodyClassList = document.body.classList
+  $bodyClassList.contains('read-mode') && $bodyClassList.remove('read-mode')
+
+})</script><script>(function(){
+  const bp = document.createElement('script');
+  const curProtocol = window.location.protocol.split(':')[0];
+  if (curProtocol === 'https') {
+    bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+  }
+  else{
+    bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+  }
+  bp.dataset.pjax = ''
+  const s = document.getElementsByTagName("script")[0];
+  s.parentNode.insertBefore(bp, s);
+})()</script></div></body></html>

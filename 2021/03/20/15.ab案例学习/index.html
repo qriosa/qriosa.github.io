@@ -1,0 +1,475 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width,initial-scale=1"><title>.ab 文件逆向分析 | Ron's Blog</title><meta name="keywords" content="Android,RE,frida,.ad,abe"><meta name="author" content="Ron"><meta name="copyright" content="Ron"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta http-equiv="Cache-Control" content="no-transform"><meta http-equiv="Cache-Control" content="no-siteapp"><meta name="description" content="通过一个例题，使用三种方法对安卓备份文件进行逆向分析，得到数据库密码。">
+<meta property="og:type" content="article">
+<meta property="og:title" content=".ab 文件逆向分析">
+<meta property="og:url" content="https://qriosa.github.io/2021/03/20/15.ab%E6%A1%88%E4%BE%8B%E5%AD%A6%E4%B9%A0/index.html">
+<meta property="og:site_name" content="Ron&#39;s Blog">
+<meta property="og:description" content="通过一个例题，使用三种方法对安卓备份文件进行逆向分析，得到数据库密码。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/ab_android_backup.png">
+<meta property="article:published_time" content="2021-03-20T02:51:52.000Z">
+<meta property="article:modified_time" content="2024-07-03T06:55:53.535Z">
+<meta property="article:author" content="Ron">
+<meta property="article:tag" content="Android">
+<meta property="article:tag" content="RE">
+<meta property="article:tag" content="frida">
+<meta property="article:tag" content=".ad">
+<meta property="article:tag" content="abe">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/ab_android_backup.png"><link rel="shortcut icon" href="/img/favicon.ico"><link rel="canonical" href="https://qriosa.github.io/2021/03/20/15.ab%E6%A1%88%E4%BE%8B%E5%AD%A6%E4%B9%A0/"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="preconnect" href="//zz.bdstatic.com"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/instantsearch.js@2.10.5/dist/instantsearch.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/instantsearch.js@2.10.5/dist/instantsearch.min.js" defer></script><script>var GLOBAL_CONFIG = { 
+  root: '/',
+  algolia: {"appId":"YJRLD9BYXZ","apiKey":"6098438f46d523cb882b858aed7b9962","indexName":"blog","hits":{"per_page":6},"languages":{"input_placeholder":"搜索文章","hits_empty":"找不到您查询的内容：${query}","hits_stats":"找到 ${hits} 条结果，用时 ${time} 毫秒"}},
+  localSearch: undefined,
+  translate: undefined,
+  noticeOutdate: {"limitDay":365,"position":"top","messagePrev":"It has been","messageNext":"days since the last update, the content of the article may be outdated."},
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '天',
+  date_suffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"你已切换为繁体","cht_to_chs":"你已切换为简体","day_to_night":"你已切换为深色模式","night_to_day":"你已切换为浅色模式","bgLight":"#49b1f5","bgDark":"#121212","position":"bottom-left"},
+  source: {
+    jQuery: 'https://cdn.jsdelivr.net/npm/jquery@latest/dist/jquery.min.js',
+    justifiedGallery: {
+      js: 'https://cdn.jsdelivr.net/npm/justifiedGallery/dist/js/jquery.justifiedGallery.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/justifiedGallery/dist/css/justifiedGallery.min.css'
+    },
+    fancybox: {
+      js: 'https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@latest/dist/jquery.fancybox.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@latest/dist/jquery.fancybox.min.css'
+    }
+  },
+  isPhotoFigcaption: true,
+  islazyload: true,
+  isanchor: true
+};
+
+var saveToLocal = {
+  set: function setWithExpiry(key, value, ttl) {
+    const now = new Date()
+    const expiryDay = ttl * 86400000
+    const item = {
+      value: value,
+      expiry: now.getTime() + expiryDay,
+    }
+    localStorage.setItem(key, JSON.stringify(item))
+  },
+
+  get: function getWithExpiry(key) {
+    const itemStr = localStorage.getItem(key)
+
+    if (!itemStr) {
+      return undefined
+    }
+    const item = JSON.parse(itemStr)
+    const now = new Date()
+
+    if (now.getTime() > item.expiry) {
+      localStorage.removeItem(key)
+      return undefined
+    }
+    return item.value
+  }
+}
+
+// https://stackoverflow.com/questions/16839698/jquery-getscript-alternative-in-native-javascript
+const getScript = url => new Promise((resolve, reject) => {
+  const script = document.createElement('script')
+  script.src = url
+  script.async = true
+  script.onerror = reject
+  script.onload = script.onreadystatechange = function() {
+    const loadState = this.readyState
+    if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+    script.onload = script.onreadystatechange = null
+    resolve()
+  }
+  document.head.appendChild(script)
+})</script><script id="config_change">var GLOBAL_CONFIG_SITE = { 
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: true,
+  isToc: true,
+  postUpdate: '2024-07-03 14:55:53'
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(function () {  window.activateDarkMode = function () {
+    document.documentElement.setAttribute('data-theme', 'dark')
+    if (document.querySelector('meta[name="theme-color"]') !== null) {
+      document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+    }
+  }
+  window.activateLightMode = function () {
+    document.documentElement.setAttribute('data-theme', 'light')
+   if (document.querySelector('meta[name="theme-color"]') !== null) {
+      document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+    }
+  }
+  const autoChangeMode = '1'
+  const t = saveToLocal.get('theme')
+  if (autoChangeMode === '1') {
+    const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches
+    const isLightMode = window.matchMedia('(prefers-color-scheme: light)').matches
+    const isNotSpecified = window.matchMedia('(prefers-color-scheme: no-preference)').matches
+    const hasNoSupport = !isDarkMode && !isLightMode && !isNotSpecified
+    if (t === undefined) {
+      if (isLightMode) activateLightMode()
+      else if (isDarkMode) activateDarkMode()
+      else if (isNotSpecified || hasNoSupport) {
+        const now = new Date()
+        const hour = now.getHours()
+        const isNight = hour <= 6 || hour >= 18
+        isNight ? activateDarkMode() : activateLightMode()
+      }
+      window.matchMedia('(prefers-color-scheme: dark)').addListener(function (e) {
+        if (saveToLocal.get('theme') === undefined) {
+          e.matches ? activateDarkMode() : activateLightMode()
+        }
+      })
+    } else if (t === 'light') activateLightMode()
+    else activateDarkMode()
+  } else if (autoChangeMode === '2') {
+    const now = new Date()
+    const hour = now.getHours()
+    const isNight = hour <= 6 || hour >= 18
+    if (t === undefined) isNight ? activateDarkMode() : activateLightMode()
+    else if (t === 'light') activateLightMode()
+    else activateDarkMode()
+  } else {
+    if (t === 'dark') activateDarkMode()
+    else if (t === 'light') activateLightMode()
+  }const asideStatus = saveToLocal.get('aside-status')
+if (asideStatus !== undefined) {
+   if (asideStatus === 'hide') {
+     document.documentElement.classList.add('hide-aside')
+   } else {
+     document.documentElement.classList.remove('hide-aside')
+   }
+}const fontSizeVal = saveToLocal.get('global-font-size')
+if (fontSizeVal !== undefined) {
+  document.documentElement.style.setProperty('--global-font-size', fontSizeVal + 'px')
+}})()</script><meta name="generator" content="Hexo 5.3.0"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="author-avatar"><img class="avatar-img" data-lazy-src="/img/kid.jpg" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data"><div class="data-item is-center"><div class="data-item-link"><a href="/archives/"><div class="headline">文章</div><div class="length-num">31</div></a></div></div><div class="data-item is-center"><div class="data-item-link"><a href="/tags/"><div class="headline">标签</div><div class="length-num">58</div></a></div></div><div class="data-item is-center"><div class="data-item-link"><a href="/categories/"><div class="headline">分类</div><div class="length-num">6</div></a></div></div></div><hr/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 时间轴</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> 关于</span></a></div></div></div></div><div id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/ab_android_backup.png)"><nav id="nav"><span id="blog_name"><a id="site-name" href="/">Ron's Blog</a></span><div id="menus"><div id="search-button"><a class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 时间轴</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> 关于</span></a></div></div><div id="toggle-menu"><a class="site-page"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="post-info"><h1 class="post-title">.ab 文件逆向分析</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2021-03-20T02:51:52.000Z" title="发表于 2021-03-20 10:51:52">2021-03-20</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2024-07-03T06:55:53.535Z" title="更新于 2024-07-03 14:55:53">2024-07-03</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/Android/">Android</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">字数总计:</span><span class="word-count">3.9k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>15分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">阅读量:</span><span id="busuanzi_value_page_pv"></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><h2 id="背景描述"><a href="#背景描述" class="headerlink" title="背景描述"></a>背景描述</h2><blockquote>
+<p>在学习 frida 的时候，从一位大佬的博客过来进行实战。本文复现了参阅博客的过程，并根据现学的知识进行了额外的操作。以此文记录学习的过程。</p>
+</blockquote>
+<p>本文是对一 Android 备份文件 <code>.ab</code> 文件入手，到得到其中的 apk 文件和数据库，并通过分析此 apk 得到数据库的密钥，进而得到数据库中的 flag。</p>
+<p>本文中用到的文件可以从这里直接下载。<a href="/download/1.ab">1.ab</a> 。</p>
+<h2 id="解决过程"><a href="#解决过程" class="headerlink" title="解决过程"></a>解决过程</h2><h3 id="后缀分析"><a href="#后缀分析" class="headerlink" title="后缀分析"></a>后缀分析</h3><p>题目文件后缀名是 <code>.ab</code> ，通过属性查看，没有其他信息。</p>
+<p><img src= "/img/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/image-20210323105932847.png" alt="属性信息"></p>
+<p>什么是 <code>.ab</code> 文件呢？<a target="_blank" rel="noopener" href="https://blog.csdn.net/qq_33356474/article/details/92188491">网上查阅一下</a>，可以知道这玩意是安卓系统的备份文件。</p>
+<p>一般情况下，<code>.ab</code> 的二进制数据中，前 24 个字节充当文件头，其中记录了一些必要的参数。如果文件头中有 <code>none</code> 字样，则此文件是没有加密的，如果存在如 <code>AES-256</code> 标志，则代表此文件是加密的。</p>
+<p>使用 <a target="_blank" rel="noopener" href="https://www.sweetscape.com/010editor/">010Editor</a> 查看文件，如下所示，可以看到 <code>none</code> 字样，因此此文件是没有经过加密的。</p>
+<p><img src= "/img/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/image-20210323110838976.png" alt="查看未加密"></p>
+<h3 id="数据提取"><a href="#数据提取" class="headerlink" title="数据提取"></a>数据提取</h3><p>确定了目标文件是未加密的，就可以使用工具进行提取。<a target="_blank" rel="noopener" href="https://github.com/nelenkov/android-backup-extractor">android-backup-extractor</a> 可以将 <code>.ab</code> 文件转化为 <code>.tar</code> 文件。然后解压即可。</p>
+<p>打开终端输入以下命令。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">java -jar ade.jar unpack [path_to_db] [output_path_to_tar]</span><br></pre></td></tr></table></figure>
+<p>如下图所示</p>
+<p><img src= "/img/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/image-20210323111553159.png" alt="ade使用"></p>
+<p>然后将 <code>.tar</code> 压缩文件解压，可以发现里面存在一个 <code>apk</code> 文件(base.apk)和两个 <code>sqlite</code> 数据库文件(Encryto.db, Demo.db)。</p>
+<p><img src= "/img/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/image-20210323111803929.png" alt="压缩包预览"></p>
+<h3 id="数据分析"><a href="#数据分析" class="headerlink" title="数据分析"></a>数据分析</h3><h4 id="apk-运行"><a href="#apk-运行" class="headerlink" title="apk 运行"></a>apk 运行</h4><p>将解压出来的 apk 文件安装到手机/模拟器上，发现是一个登录页面，于是随便在输入框输入了弱口令，但是提示 “Wait a Minute.What was happened”，其他并没有什么有价值的信息。</p>
+<p><img src= "/img/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/image-20210323112348380.png" alt="测试运行"></p>
+<p><img src= "/img/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/image-20210323112356620.png" alt="image-20210323112356620"></p>
+<h4 id="数据库文件查看"><a href="#数据库文件查看" class="headerlink" title="数据库文件查看"></a>数据库文件查看</h4><p>既然 apk 直接打开无法观察到有用的信息，那就尝试查看一下数据库，说不定能看到账号觅马。</p>
+<p>直接使用 <a target="_blank" rel="noopener" href="https://sqlitebrowser.org/dl/">sqlitebrowser</a>  狂暴轰入打开 <code>Demo.db</code> ，但是失败了，再打开 <code>Encryto.db</code> 也是一样的效果。结合这个名字，多半是加密数据库了。 </p>
+<p><img src= "/img/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/image-20210323113623507.png" alt="打卡数据库失败"></p>
+<h4 id="反编译-APK"><a href="#反编译-APK" class="headerlink" title="反编译 APK"></a>反编译 APK</h4><p>使用 <code>jeb</code> 反编译 <code>Demo.apk</code> ,搜索一下在模拟器中运行时弹出的字符串 “Wait a Minute.What was happened” ，可以发现是在 <code>AnotherActivity</code> 中。</p>
+<p><img src= "/img/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/image-20210323140417836.png" alt="AnotherActivity查看"></p>
+<p>交叉引用一下，发现在 <code>MainActivity</code> 中的 <code>onClick()</code> 中绑定了监听。然后通过 <code>Intent</code> 开启了 <code>AnotherActivity</code> 。</p>
+<p>而对按钮的设计都是在 <code>onCreate()</code> 方法中，但其中除了对按钮、布局的设定外和调用了一个加密数据库相关的操作后就直接调用了私有方法 <code>a()</code> 。 所以关键就在这个 <code>a</code> 方法中。</p>
+<p><img src= "/img/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/image-20210323141516191.png" alt="MainActivity"></p>
+<p>为了方便分析，这里将其中的私有方法 <code>a()</code> 单独列举拖出来。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">a</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    SQLiteDatabase.loadLibs(<span class="keyword">this</span>);</span><br><span class="line">    <span class="keyword">this</span>.b = <span class="keyword">new</span> a(<span class="keyword">this</span>, <span class="string">&quot;Demo.db&quot;</span>, <span class="keyword">null</span>, <span class="number">1</span>);</span><br><span class="line">    ContentValues v0 = <span class="keyword">new</span> ContentValues();</span><br><span class="line">    v0.put(<span class="string">&quot;name&quot;</span>, <span class="string">&quot;Stranger&quot;</span>);</span><br><span class="line">    v0.put(<span class="string">&quot;password&quot;</span>, Integer.valueOf(<span class="number">0x1E240</span>));</span><br><span class="line">    com.example.yaphetshan.tencentwelcome.a.a v1 = <span class="keyword">new</span> com.example.yaphetshan.tencentwelcome.a.a();</span><br><span class="line">    String v2 = v1.a(v0.getAsString(<span class="string">&quot;name&quot;</span>), v0.getAsString(<span class="string">&quot;password&quot;</span>));</span><br><span class="line">    <span class="keyword">this</span>.a = <span class="keyword">this</span>.b.getWritableDatabase(v1.a(v2 + v1.b(v2, v0.getAsString(<span class="string">&quot;password&quot;</span>))).substring(<span class="number">0</span>, <span class="number">7</span>));</span><br><span class="line">    <span class="keyword">this</span>.a.insert(<span class="string">&quot;TencentMicrMsg&quot;</span>, <span class="keyword">null</span>, v0);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>第五、六两行放置了一个 <code>username</code> 为 <code>Stranger</code> ， <code>password</code> 为 <code>123456</code> 。</p>
+<p>第七行实例化了一个类，可以暂时不管。</p>
+<p>第八行计算了一个字符串 <code>v2</code>。通过 <code>v1.a(String, String)</code> 。定位到其中可以看到该方法只是将两个参数的前四位进行了拼接。事实上，我们只需要知道它本质是一个 <code>z = f(x,y)</code> 的二到一的映射就好。</p>
+<p><img src= "/img/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/image-20210323144836296.png" alt="a(string, string)"></p>
+<p>第九行，将 <code>v2</code> 放入了一堆函数中又放入另外的函数中。看起来有很多的操作，我们可以从内而外一层一层慢慢进行分析。具体分析过程没有兴趣的同志可以跳过。<strong>此行就是将 <code>v2</code> 进行一系列计算得到了数据库的密钥，再传入打开了数据库并将实例赋值给 <code>this.a</code>， 并且可以忽略其中的变化过程，直接正向复用其代码得到 key</strong> 。</p>
+<ol>
+<li><p>首先，查看第一层 <code>v1.b(v2, v0.getAsString(&quot;password&quot;))</code> ， 定位到 <code>v1.b(String, String)</code> ，进入函数中进行查看，发现与第二个参数无关，实际上只与第一个参数有关。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> String <span class="title">b</span><span class="params">(String arg2, String arg3)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">new</span> b();</span><br><span class="line">    <span class="keyword">return</span> b.a(arg2); <span class="comment">// 只与 arg2 有关，所以此函数本质是一个 z=f(x,y) -&gt; z=f(x) 的函数 </span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>然后，研究上面第三行的 <code>b.a(String)</code> ，进入函数中查看，这个函数本质就是一个 <code>z=f(x)</code> 的一到一的映射。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> String <span class="title">a</span><span class="params">(String arg9)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">int</span> v0 = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">char</span>[] v2 = <span class="keyword">new</span> <span class="keyword">char</span>[]&#123;<span class="string">&#x27;0&#x27;</span>, <span class="string">&#x27;1&#x27;</span>, <span class="string">&#x27;2&#x27;</span>, <span class="string">&#x27;3&#x27;</span>, <span class="string">&#x27;4&#x27;</span>, <span class="string">&#x27;5&#x27;</span>, <span class="string">&#x27;6&#x27;</span>, <span class="string">&#x27;7&#x27;</span>, <span class="string">&#x27;8&#x27;</span>, <span class="string">&#x27;9&#x27;</span>, <span class="string">&#x27;a&#x27;</span>, <span class="string">&#x27;b&#x27;</span>, <span class="string">&#x27;c&#x27;</span>, <span class="string">&#x27;d&#x27;</span>, <span class="string">&#x27;e&#x27;</span>, <span class="string">&#x27;f&#x27;</span>&#125;;</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">        <span class="keyword">byte</span>[] v1 = arg9.getBytes();</span><br><span class="line">        MessageDigest v3 = MessageDigest.getInstance(<span class="string">&quot;MD5&quot;</span>); <span class="comment">// 想要计算 md5 哈希值</span></span><br><span class="line">        v3.update(v1); <span class="comment">// 将变相后的 arg9 传递进去</span></span><br><span class="line">        <span class="keyword">byte</span>[] v3_1 = v3.digest();  <span class="comment">// 完成一次hash计算，实际就是计算了一个只与传入参数相关的哈希，可以认为 v3_1 = f(arg9) 一到一映射</span></span><br><span class="line">        <span class="keyword">char</span>[] v5 = <span class="keyword">new</span> <span class="keyword">char</span>[v3_1.length * <span class="number">2</span>];</span><br><span class="line">        <span class="keyword">int</span> v1_1 = <span class="number">0</span>;</span><br><span class="line">        <span class="keyword">while</span>(v0 &lt; v3_1.length) &#123;</span><br><span class="line">            <span class="keyword">int</span> v6 = v3_1[v0];</span><br><span class="line">            <span class="keyword">int</span> v7 = v1_1 + <span class="number">1</span>;</span><br><span class="line">            v5[v1_1] = v2[v6 &gt;&gt;&gt; <span class="number">4</span> &amp; <span class="number">15</span>];  <span class="comment">// 把高4位挪到低4位，抹掉低4位，作下标，填入 v5 的偶数下标位置</span></span><br><span class="line">            v1_1 = v7 + <span class="number">1</span>;</span><br><span class="line">            v5[v7] = v2[v6 &amp; <span class="number">15</span>];  <span class="comment">// 只使用低4位，抹掉高4位，作下标，填入 v5 的奇数下标位置</span></span><br><span class="line">            ++v0;  <span class="comment">// hash 值的每一个 byte 经过计算，都会变成 v5 的两个 byte(s)</span></span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> String(v5); <span class="comment">// 最终返回 string v5 可以理解整个函数的功能就是 z=f(x) 的一对一映射</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">catch</span>(Exception v0_1) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>然后回到前面的 <code>v1.b(String, String)</code> 中。可以发现此函数接受两个参数，但是仅仅传入第一个参数到一个 <code>z=f(x)</code> 的函数，所以此函数本质也是一个 <code>z=g(x)</code> 的一对一的映射。</p>
+</li>
+<li><p>然后查看第二层， <code>v1.a(v2 + v1.b(v2, v0.getAsString(&quot;password&quot;))).substring(0, 7)</code> ，内层的参数是将 <code>v2</code> 进行了一个 <code>z=f(x)</code> 的映射后再与 <code>v2</code> 自身进行相加，故这个操作相当于另一个一对一的映射， <code>z=g(x)</code> ，然后  定位到 <code>v1.a(String)</code> 中，此方法将一个固定字符串 <code>yaphetshan</code> 拼接到参数 <code>arg3</code> 的尾部，故此操作仍然是相当于 <code>z=f(x)</code> 。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> String a;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="title">a</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">this</span>.a = <span class="string">&quot;yaphetshan&quot;</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">public</span> String <span class="title">a</span><span class="params">(String arg3)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">new</span> b();</span><br><span class="line">    <span class="keyword">return</span> b.b(arg3 + <span class="keyword">this</span>.a);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>然后再查看 <code>b.b(arg3 + this.a)</code> ，定位到 <code>b.b(String)</code> ，稍微细心一点的同学已经发现，这本质也是一个 <code>z=f(x)</code> 的一对一映射，与前面的区别在于一个使用的哈希算法是 <code>md5</code> ，另一个是 <code>sha-1</code> 。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> String <span class="title">b</span><span class="params">(String arg9)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">int</span> v0 = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">char</span>[] v2 = <span class="keyword">new</span> <span class="keyword">char</span>[]&#123;<span class="string">&#x27;0&#x27;</span>, <span class="string">&#x27;1&#x27;</span>, <span class="string">&#x27;2&#x27;</span>, <span class="string">&#x27;3&#x27;</span>, <span class="string">&#x27;4&#x27;</span>, <span class="string">&#x27;5&#x27;</span>, <span class="string">&#x27;6&#x27;</span>, <span class="string">&#x27;7&#x27;</span>, <span class="string">&#x27;8&#x27;</span>, <span class="string">&#x27;9&#x27;</span>, <span class="string">&#x27;a&#x27;</span>, <span class="string">&#x27;b&#x27;</span>, <span class="string">&#x27;c&#x27;</span>, <span class="string">&#x27;d&#x27;</span>, <span class="string">&#x27;e&#x27;</span>, <span class="string">&#x27;f&#x27;</span>&#125;;</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">        <span class="keyword">byte</span>[] v1 = arg9.getBytes();</span><br><span class="line">        MessageDigest v3 = MessageDigest.getInstance(<span class="string">&quot;SHA-1&quot;</span>);</span><br><span class="line">        v3.update(v1);</span><br><span class="line">        <span class="keyword">byte</span>[] v3_1 = v3.digest();</span><br><span class="line">        <span class="keyword">char</span>[] v5 = <span class="keyword">new</span> <span class="keyword">char</span>[v3_1.length * <span class="number">2</span>];</span><br><span class="line">        <span class="keyword">int</span> v1_1 = <span class="number">0</span>;</span><br><span class="line">        <span class="keyword">while</span>(v0 &lt; v3_1.length) &#123;</span><br><span class="line">            <span class="keyword">int</span> v6 = v3_1[v0];</span><br><span class="line">            <span class="keyword">int</span> v7 = v1_1 + <span class="number">1</span>;</span><br><span class="line">            v5[v1_1] = v2[v6 &gt;&gt;&gt; <span class="number">4</span> &amp; <span class="number">15</span>];</span><br><span class="line">            v1_1 = v7 + <span class="number">1</span>;</span><br><span class="line">            v5[v7] = v2[v6 &amp; <span class="number">15</span>];</span><br><span class="line">            ++v0;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> String(v5);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">catch</span>(Exception v0_1) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p> 于是回到前面， <code>v1.a(v2 + v1.b(v2, v0.getAsString(&quot;password&quot;))).substring(0, 7)</code> 还是将 <code>v2</code> 放入了一个 <code>z=f(x)</code> 的一对一的映射（包含了取前 7 位的操作，因为这也是一对一的）计算出密钥。再用于连接数据库。</p>
+</li>
+<li><p>层层深入下去，直到找到了关键方法，确信了计算出来的就是密钥。<br><img src= "/img/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/image-20210323144254073.png" alt="确定 key"></p>
+</li>
+</ol>
+<h4 id="密钥生成"><a href="#密钥生成" class="headerlink" title="密钥生成"></a>密钥生成</h4><p>至此，我们知道了如何得到打开数据库的密钥。根据以上的分析过程，我们没有必要深入分析其中的计算过程，只需要知道下面的式子：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">key&#x3D;f(username, password)</span><br><span class="line"># username &#x3D; Stranger， password &#x3D; 123456</span><br><span class="line"># 函数 f 程序中有，我们不必自己实现，直接 copy 就好。</span><br></pre></td></tr></table></figure>
+<p>所以可以直接编写密钥生成脚本，只用写第九行，如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> java.security.MessageDigest;</span><br><span class="line"><span class="keyword">import</span> java.util.*;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">b</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">b</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">super</span>();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        String v2 = <span class="string">&quot;Stra1234&quot;</span>; <span class="comment">// 我们已经知道是怎么拼接的就直接写死了</span></span><br><span class="line">        String varV1B = a(v2);</span><br><span class="line">        String varKey = v2 + varV1B + <span class="string">&quot;yaphetshan&quot;</span>; <span class="comment">// 这里也不用去调用了，直接写死</span></span><br><span class="line">        System.out.print(<span class="string">&quot;KEY = &quot;</span>);</span><br><span class="line">        System.out.print(b(varKey).substring(<span class="number">0</span>,<span class="number">7</span>));</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 直接 copy</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> String <span class="title">a</span><span class="params">(String arg9)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">int</span> v0 = <span class="number">0</span>;</span><br><span class="line">        <span class="keyword">char</span>[] v2 = <span class="keyword">new</span> <span class="keyword">char</span>[]&#123;<span class="string">&#x27;0&#x27;</span>, <span class="string">&#x27;1&#x27;</span>, <span class="string">&#x27;2&#x27;</span>, <span class="string">&#x27;3&#x27;</span>, <span class="string">&#x27;4&#x27;</span>, <span class="string">&#x27;5&#x27;</span>, <span class="string">&#x27;6&#x27;</span>, <span class="string">&#x27;7&#x27;</span>, <span class="string">&#x27;8&#x27;</span>, <span class="string">&#x27;9&#x27;</span>, <span class="string">&#x27;a&#x27;</span>, <span class="string">&#x27;b&#x27;</span>, <span class="string">&#x27;c&#x27;</span>, <span class="string">&#x27;d&#x27;</span>, <span class="string">&#x27;e&#x27;</span>, <span class="string">&#x27;f&#x27;</span>&#125;;</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            <span class="keyword">byte</span>[] v1 = arg9.getBytes();</span><br><span class="line">            MessageDigest v3 = MessageDigest.getInstance(<span class="string">&quot;MD5&quot;</span>);</span><br><span class="line">            v3.update(v1);</span><br><span class="line">            <span class="keyword">byte</span>[] v3_1 = v3.digest();  <span class="comment">// 完成一次hash计算</span></span><br><span class="line">            <span class="keyword">char</span>[] v5 = <span class="keyword">new</span> <span class="keyword">char</span>[v3_1.length * <span class="number">2</span>];</span><br><span class="line">            <span class="keyword">int</span> v1_1 = <span class="number">0</span>;</span><br><span class="line">            <span class="keyword">while</span>(v0 &lt; v3_1.length) &#123;</span><br><span class="line">                <span class="keyword">int</span> v6 = v3_1[v0];</span><br><span class="line">                <span class="keyword">int</span> v7 = v1_1 + <span class="number">1</span>;</span><br><span class="line">                v5[v1_1] = v2[v6 &gt;&gt;&gt; <span class="number">4</span> &amp; <span class="number">15</span>];  <span class="comment">// 把高4位挪到低4位，抹掉低4位，作下标，填入 v5 的偶数下标位置</span></span><br><span class="line">                v1_1 = v7 + <span class="number">1</span>;</span><br><span class="line">                v5[v7] = v2[v6 &amp; <span class="number">15</span>];  <span class="comment">// 就用低4位，抹掉高4位，作下标，填入 v5 的奇数下标位置</span></span><br><span class="line">                ++v0;  <span class="comment">// hash 值的每一个 byte 经过计算，都会变成 v5 的两个 byte</span></span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">new</span> String(v5);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">catch</span>(Exception v0_1) &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"><span class="comment">// 直接 copy</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> String <span class="title">b</span><span class="params">(String arg9)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">int</span> v0 = <span class="number">0</span>;</span><br><span class="line">        <span class="keyword">char</span>[] v2 = <span class="keyword">new</span> <span class="keyword">char</span>[]&#123;<span class="string">&#x27;0&#x27;</span>, <span class="string">&#x27;1&#x27;</span>, <span class="string">&#x27;2&#x27;</span>, <span class="string">&#x27;3&#x27;</span>, <span class="string">&#x27;4&#x27;</span>, <span class="string">&#x27;5&#x27;</span>, <span class="string">&#x27;6&#x27;</span>, <span class="string">&#x27;7&#x27;</span>, <span class="string">&#x27;8&#x27;</span>, <span class="string">&#x27;9&#x27;</span>, <span class="string">&#x27;a&#x27;</span>, <span class="string">&#x27;b&#x27;</span>, <span class="string">&#x27;c&#x27;</span>, <span class="string">&#x27;d&#x27;</span>, <span class="string">&#x27;e&#x27;</span>, <span class="string">&#x27;f&#x27;</span>&#125;;</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            <span class="keyword">byte</span>[] v1 = arg9.getBytes();</span><br><span class="line">            MessageDigest v3 = MessageDigest.getInstance(<span class="string">&quot;SHA-1&quot;</span>);</span><br><span class="line">            v3.update(v1);</span><br><span class="line">            <span class="keyword">byte</span>[] v3_1 = v3.digest();</span><br><span class="line">            <span class="keyword">char</span>[] v5 = <span class="keyword">new</span> <span class="keyword">char</span>[v3_1.length * <span class="number">2</span>];</span><br><span class="line">            <span class="keyword">int</span> v1_1 = <span class="number">0</span>;</span><br><span class="line">            <span class="keyword">while</span>(v0 &lt; v3_1.length) &#123;</span><br><span class="line">                <span class="keyword">int</span> v6 = v3_1[v0];</span><br><span class="line">                <span class="keyword">int</span> v7 = v1_1 + <span class="number">1</span>;</span><br><span class="line">                v5[v1_1] = v2[v6 &gt;&gt;&gt; <span class="number">4</span> &amp; <span class="number">15</span>];</span><br><span class="line">                v1_1 = v7 + <span class="number">1</span>;</span><br><span class="line">                v5[v7] = v2[v6 &amp; <span class="number">15</span>];</span><br><span class="line">                ++v0;</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">new</span> String(v5);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">catch</span>(Exception v0_1) &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>编译运行上述脚本可以成功得到 <code>KEY=ae56f99</code> 。（笔者不常用 java，此处由于里面的主类名字的 <code>b</code> ，所以文件命名必须的 <code>b.java</code> 。<del>Python YES！</del></p>
+<p><img src= "/img/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/image-20210323154118066.png" alt="编译运行脚本"></p>
+<h3 id="flag-获取"><a href="#flag-获取" class="headerlink" title="flag 获取"></a>flag 获取</h3><p>得到密钥之后，使用 <code>sqlitebrowser</code> （SQLCipher.exe） 来打开加密数据库 <code>Encryto.db</code>。  将文件拖入窗口中，会弹出来一个窗，让输入口令。</p>
+<p><img src= "/img/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/image-20210323160807154.png" alt="解密数据库"></p>
+<p>输入之后就可以看到其中的内容了。 flag 字样很显眼，查看一下。</p>
+<p><img src= "/img/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/image-20210323160921653.png" alt="查看表结构"></p>
+<p>在表内容中可以看到一个 flag 的值为 “VGN0ZntIM2xsMF9Eb19ZMHVfTG92M19UZW5jM250IX0=” 。我觉得是 <code>base64</code>，解码一下看看。</p>
+<p><img src= "/img/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/image-20210323161026314.png" alt="得到 flag base64数据"></p>
+<p>python 走一波，拿到 flag 为 “Tctf{H3ll0_Do_Y0u_Lov3_Tenc3nt!}”</p>
+<p><img src= "/img/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/image-20210323161327993.png" alt="解码得到 flag"></p>
+<h3 id="frida-获取-key"><a href="#frida-获取-key" class="headerlink" title="frida 获取 key"></a>frida 获取 key</h3><p>由于笔者是从学习 <code>frida</code> 过来的，在前面分析到密钥生成那一步时，笔者就觉得了本题也可以不用写解密脚本，而是通过 <code>hook</code> 的方式，或者直接调用 app 中的函数，让其帮忙计算得到密钥。</p>
+<h4 id="直接调用-instance"><a href="#直接调用-instance" class="headerlink" title="直接调用 instance"></a>直接调用 instance</h4><p>由前面的逻辑可以知道，密钥 <code>KEY</code> 是通过一些列计算得到的，如果我们主动调用 instance 并获取其返回值则可以直接得到密钥 <code>KEY</code> 。</p>
+<p><code>frida_rpc.js</code></p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">callFun</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">    Java.perform(<span class="function"><span class="keyword">function</span> <span class="title">fn</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">        Java.choose(<span class="string">&quot;com.example.yaphetshan.tencentwelcome.MainActivity&quot;</span>, &#123;</span><br><span class="line">            onMatch: <span class="function"><span class="keyword">function</span> (<span class="params">x</span>) </span>&#123;</span><br><span class="line">                <span class="keyword">var</span> password = Java.use(<span class="string">&quot;java.lang.String&quot;</span>).$new(<span class="string">&quot;123456&quot;</span>); <span class="comment">// password</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 找到类 com.example.yaphetshan.tencentwelcome.a.a 并调用其构造函数 实例化了一个 v1</span></span><br><span class="line"><span class="comment">// 相当于 com.example.yaphetshan.tencentwelcome.a.a v1 = new com.example.yaphetshan.tencentwelcome.a.a(); </span></span><br><span class="line">                <span class="keyword">var</span> v1 = Java.use(<span class="string">&quot;com.example.yaphetshan.tencentwelcome.a.a&quot;</span>).$new(); </span><br><span class="line"></span><br><span class="line"><span class="comment">// v2 的拼接就不去调用了直接写死</span></span><br><span class="line">                <span class="keyword">var</span> v2 = Java.use(<span class="string">&quot;java.lang.String&quot;</span>).$new(<span class="string">&quot;Stra1234&quot;</span>); </span><br><span class="line"></span><br><span class="line"><span class="comment">// 和 getWritableDatabase 的参数写的一模一样                </span></span><br><span class="line">                <span class="keyword">var</span> key = Java.use(<span class="string">&quot;java.lang.String&quot;</span>).$new(v1.a(v2 + v1.b(v2, password))).substring(<span class="number">0</span>, <span class="number">7</span>); </span><br><span class="line"></span><br><span class="line">                <span class="built_in">console</span>.log(<span class="string">&quot;KEY = &quot;</span> + key);  <span class="comment">// 打印 KEY</span></span><br><span class="line">            &#125;,</span><br><span class="line">            onComplete: <span class="function"><span class="keyword">function</span> (<span class="params"></span>) </span>&#123;</span><br><span class="line">                <span class="comment">// </span></span><br><span class="line">            &#125;</span><br><span class="line">        &#125;)</span><br><span class="line">    &#125;)</span><br><span class="line">&#125;</span><br><span class="line">rpc.exports = &#123;</span><br><span class="line">    callfun: callFun</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p><code>loader.py</code></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> time</span><br><span class="line"><span class="keyword">import</span> frida</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">device = frida.get_device_manager().add_remote_device(<span class="string">&quot;127.0.0.1:27042&quot;</span>)</span><br><span class="line">pid = device.spawn([<span class="string">&quot;com.example.yaphetshan.tencentwelcome&quot;</span>])</span><br><span class="line">device.resume(pid)</span><br><span class="line"></span><br><span class="line">time.sleep(<span class="number">1</span>)</span><br><span class="line"></span><br><span class="line">session = device.attach(pid)</span><br><span class="line"><span class="keyword">with</span> <span class="built_in">open</span>(<span class="string">&quot;frida_rpc.js&quot;</span>, <span class="string">&quot;r&quot;</span>, encoding=<span class="string">&quot;utf-8&quot;</span>) <span class="keyword">as</span> f:</span><br><span class="line">    script = session.create_script(f.read())</span><br><span class="line"></span><br><span class="line">script.load()</span><br><span class="line"></span><br><span class="line">script.exports.callfun()</span><br></pre></td></tr></table></figure>
+<p>运行脚本，可以看到觅马直接打印出来了。</p>
+<p><img src= "/img/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/image-20210323193544906.png" alt="加载js注入"></p>
+<h4 id="hook-getWritableDatabase"><a href="#hook-getWritableDatabase" class="headerlink" title="hook getWritableDatabase"></a>hook getWritableDatabase</h4><p>由前面的逻辑可以知道，方法 <code>getWritableDatabase(String)</code> 中收到的字符串就是密钥 <code>KEY</code>，因此我们可以通过 <code>hook</code> 这个方法，然后观察他的参数就可以知道密钥 <code>KEY</code> 了。</p>
+<p>在一通上网查询资料后，终于配置好了 <code>adb</code> ，<code>objection</code> ， <code>frida</code> 与 夜神模拟器的连接。然后输入命令连接上模拟器。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">objection -d -g com.example.yaphetshan.tencentwelcome explore</span><br></pre></td></tr></table></figure>
+<p>效果如下图所示，一般情况下，如果我们不知道这个方法所属的类，我们需要先查找这个方法，如下输入命令查找方法。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">android hooking search methods getWritableDatabase</span><br></pre></td></tr></table></figure>
+<p><img src= "/img/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/image-20210323171016224.png" alt="使用 objection"></p>
+<p>但是由于方法数量实在太过于巨大，往往都会崩溃掉，更别说电脑还是开的模拟器了。于是，这里有一个更好的方法——利用 <code>jeb</code> 。将鼠标放到我们需要查找的方法上悬停， <code>jeb</code> 就会显示目标方法的详细信息，然后我们直接 copy 出来即可。</p>
+<p><img src= "/img/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/image-20210323171553708.png" alt="jeb查看类"></p>
+<p>有了方法的全路径名称，下面就是给方法设置 <code>hook</code> 从而查看觅马。由于我们只需要该方法的参数即可，因此我们只选择 <code>hook</code> 参数。输入下面的命令，如下图所示，即可完成 <code>hook</code> 。 </p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">android hooking watch class_method net.sqlcipher.database.SQLiteOpenHelper.getWritableDatabase --dump-args [--dump-backtrace --dump-return]</span><br></pre></td></tr></table></figure>
+<p><img src= "/img/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/image-20210323172033824.png" alt="进行 hook"></p>
+<p>然后在模拟器中点击 <code>back</code> （返回键）再重新进入应用。关于这一点，会一点点 Android 开发的应该都明白原理，涉及 Activity 的生命周期。等此方法被重新执行，我们就可在终端中看到我们想要的信息了，如下图所示，打印了我们想要的密钥 KEY。</p>
+<p><img src= "/img/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/image-20210323172409773.png" alt="得到 key"></p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>此次算是第一次带有一定目的地进行逆向分析，虽然是在学习 <code>frida</code> 的路上中途过来实战练习的。总的来讲收获颇多，包括 <code>.ab</code> 文件是啥，又学会了用一些本文中的工具（<code>sqlitebrowser</code> ， <code>abe</code> 等）。幸好在实验之前，有学习过了 <code>jeb</code> 的使用和操作，Android 的开发，不然可能抄教程都抄不懂。</p>
+<p>且今后遇到不熟悉的题目或者资料也不应该慌乱，甚至放弃。应该像参考连接的博主学习，可以利用搜索引擎现学（粗学）相关的知识，再精学可能有用的知识来解决问题，事后再进一步学习相关的知识。</p>
+<p>虽然还有很多东西没有细细品味，如 <code>.ab</code> 文件的构造和 <code>ssqlitecipher</code> 等，但是， 鉴于本次是旁道而来的实战，就不在此处进行研究了。</p>
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><p>参考链接1：学习 frida 的使用 <a target="_blank" rel="noopener" href="https://eternalsakura13.com/2020/07/04/frida/">https://eternalsakura13.com/2020/07/04/frida/</a></p>
+<p>参考链接2：XCTF app3 题目的 wp <a target="_blank" rel="noopener" href="https://www.52pojie.cn/forum.php?mod=viewthread&amp;tid=1082706">https://www.52pojie.cn/forum.php?mod=viewthread&amp;tid=1082706</a></p>
+<p>参考链接3：Android backup extractor <a target="_blank" rel="noopener" href="https://github.com/nelenkov/android-backup-extractor">https://github.com/nelenkov/android-backup-extractor</a></p>
+<p>参考链接4：jadx <a target="_blank" rel="noopener" href="https://github.com/skylot/jadx">https://github.com/skylot/jadx</a></p>
+<p>参考链接5： <code>.ab</code> 文件 <a target="_blank" rel="noopener" href="https://blog.csdn.net/qq_33356474/article/details/92188491">https://blog.csdn.net/qq_33356474/article/details/92188491</a></p>
+<p>参考链接6：sqlitebrowser  <a target="_blank" rel="noopener" href="https://sqlitebrowser.org/dl/">https://sqlitebrowser.org/dl/</a></p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta">文章作者: </span><span class="post-copyright-info"><a href="mailto:undefined">Ron</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta">文章链接: </span><span class="post-copyright-info"><a href="https://qriosa.github.io/2021/03/20/15.ab%E6%A1%88%E4%BE%8B%E5%AD%A6%E4%B9%A0/">https://qriosa.github.io/2021/03/20/15.ab%E6%A1%88%E4%BE%8B%E5%AD%A6%E4%B9%A0/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta">版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来自 <a href="https://qriosa.github.io" target="_blank">Ron's Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/Android/">Android</a><a class="post-meta__tags" href="/tags/RE/">RE</a><a class="post-meta__tags" href="/tags/frida/">frida</a><a class="post-meta__tags" href="/tags/ad/">.ad</a><a class="post-meta__tags" href="/tags/abe/">abe</a></div><div class="post_share"><div class="addthis_inline_share_toolbox"></div><script src="//s7.addthis.com/js/300/addthis_widget.js#pubid=5fb3e45d5f9ff11c" async="async"></script></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i> 打赏<div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="/img/wechat.png" target="_blank"><img class="post-qr-code-img" data-lazy-src="/img/wechat.png" alt="wechat"/></a><div class="post-qr-code-desc">wechat</div></li><li class="reward-item"><a href="/img/alipay.png" target="_blank"><img class="post-qr-code-img" data-lazy-src="/img/alipay.png" alt="alipay"/></a><div class="post-qr-code-desc">alipay</div></li></ul></div></div></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/2021/04/05/16.Java%20%E5%8F%8D%E5%B0%84/"><img class="prev-cover" data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/image-20210331103826461.png" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="pagination-info"><div class="label">上一篇</div><div class="prev_info">Java 反射机制学习</div></div></a></div><div class="next-post pull-right"><a href="/2021/03/15/14.frida%E5%AE%89%E8%A3%85%E4%B8%8E%E5%9F%BA%E7%A1%80/"><img class="next-cover" data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/frida.png" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">frida 安装与基础</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span> 相关推荐</span></div><div class="relatedPosts-list"><div><a href="/2021/03/05/13.反编译一个apk/" title="反编译未加固的 APK"><img class="cover" data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/APK-RE.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2021-03-05</div><div class="title">反编译未加固的 APK</div></div></a></div><div><a href="/2021/03/15/14.frida安装与基础/" title="frida 安装与基础"><img class="cover" data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/frida.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2021-03-15</div><div class="title">frida 安装与基础</div></div></a></div><div><a href="/2021/05/10/18.NDK_Hook/" title="NDK Hook"><img class="cover" data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/Hook.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2021-05-10</div><div class="title">NDK Hook</div></div></a></div><div><a href="/2021/03/02/12.android 正向/" title="Android 正向入门基础知识"><img class="cover" data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/android.jfif" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2021-03-02</div><div class="title">Android 正向入门基础知识</div></div></a></div><div><a href="/2021/04/10/17.JNI入门了解/" title="NDK 与 JNI 入门了解"><img class="cover" data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/JNI&NDK.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2021-04-10</div><div class="title">NDK 与 JNI 入门了解</div></div></a></div><div><a href="/2021/04/05/16.Java 反射/" title="Java 反射机制学习"><img class="cover" data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/image-20210331103826461.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2021-04-05</div><div class="title">Java 反射机制学习</div></div></a></div></div></div><hr/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div class="vcomment" id="vcomment"></div></div></div></div></div><div class="aside_content" id="aside_content"><div class="card-widget card-info"><div class="card-content"><div class="card-info-avatar is-center"><img class="avatar-img" data-lazy-src="/img/kid.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/><div class="author-info__name">Ron</div><div class="author-info__description">retired OIer, Novice CTF Enthusiast</div></div><div class="card-info-data"><div class="card-info-data-item is-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">31</div></a></div><div class="card-info-data-item is-center"><a href="/tags/"><div class="headline">标签</div><div class="length-num">58</div></a></div><div class="card-info-data-item is-center"><a href="/categories/"><div class="headline">分类</div><div class="length-num">6</div></a></div></div><a class="button--animated" id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/LCX666"><i class="fab fa-github"></i><span>Follow Me</span></a><div class="card-info-social-icons is-center"><a class="social-icon" href="https://github.com/LCX666" target="_blank" title="Github"><i class="fab fa-github"></i></a><a class="social-icon" href="mailto:lucxer@qq.com" target="_blank" title="Email"><i class="fas fa-envelope"></i></a></div></div></div><div class="card-widget card-announcement"><div class="card-content"><div class="item-headline"><i class="fas fa-bullhorn card-announcement-animation"></i><span>公告</span></div><div class="announcement_content">号外！号外！号外！评论系统已开放！</div></div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="card-content"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%83%8C%E6%99%AF%E6%8F%8F%E8%BF%B0"><span class="toc-number">1.</span> <span class="toc-text">背景描述</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%A7%A3%E5%86%B3%E8%BF%87%E7%A8%8B"><span class="toc-number">2.</span> <span class="toc-text">解决过程</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%90%8E%E7%BC%80%E5%88%86%E6%9E%90"><span class="toc-number">2.1.</span> <span class="toc-text">后缀分析</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%95%B0%E6%8D%AE%E6%8F%90%E5%8F%96"><span class="toc-number">2.2.</span> <span class="toc-text">数据提取</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%95%B0%E6%8D%AE%E5%88%86%E6%9E%90"><span class="toc-number">2.3.</span> <span class="toc-text">数据分析</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#apk-%E8%BF%90%E8%A1%8C"><span class="toc-number">2.3.1.</span> <span class="toc-text">apk 运行</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%95%B0%E6%8D%AE%E5%BA%93%E6%96%87%E4%BB%B6%E6%9F%A5%E7%9C%8B"><span class="toc-number">2.3.2.</span> <span class="toc-text">数据库文件查看</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%8F%8D%E7%BC%96%E8%AF%91-APK"><span class="toc-number">2.3.3.</span> <span class="toc-text">反编译 APK</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%AF%86%E9%92%A5%E7%94%9F%E6%88%90"><span class="toc-number">2.3.4.</span> <span class="toc-text">密钥生成</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#flag-%E8%8E%B7%E5%8F%96"><span class="toc-number">2.4.</span> <span class="toc-text">flag 获取</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#frida-%E8%8E%B7%E5%8F%96-key"><span class="toc-number">2.5.</span> <span class="toc-text">frida 获取 key</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%9B%B4%E6%8E%A5%E8%B0%83%E7%94%A8-instance"><span class="toc-number">2.5.1.</span> <span class="toc-text">直接调用 instance</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#hook-getWritableDatabase"><span class="toc-number">2.5.2.</span> <span class="toc-text">hook getWritableDatabase</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-number">3.</span> <span class="toc-text">总结</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83"><span class="toc-number">4.</span> <span class="toc-text">参考</span></a></li></ol></div></div></div><div class="card-widget card-recent-post"><div class="card-content"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/2021/10/05/31.%E4%B8%A4%E4%B8%AA%E5%AF%86%E7%A0%81%E9%A2%98/" title="两个有意思的题"><img data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/practice_3_crypto.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="两个有意思的题"/></a><div class="content"><a class="title" href="/2021/10/05/31.%E4%B8%A4%E4%B8%AA%E5%AF%86%E7%A0%81%E9%A2%98/" title="两个有意思的题">两个有意思的题</a><time datetime="2021-10-05T04:15:06.000Z" title="发表于 2021-10-05 12:15:06">2021-10-05</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2021/09/25/30.RSA-%E7%9B%B8%E5%85%B3%E6%B6%88%E6%81%AF%E6%94%BB%E5%87%BB/" title="RSA-9 Coppersmith 相关攻击"><img data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/RSA-9.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="RSA-9 Coppersmith 相关攻击"/></a><div class="content"><a class="title" href="/2021/09/25/30.RSA-%E7%9B%B8%E5%85%B3%E6%B6%88%E6%81%AF%E6%94%BB%E5%87%BB/" title="RSA-9 Coppersmith 相关攻击">RSA-9 Coppersmith 相关攻击</a><time datetime="2021-09-25T05:25:46.000Z" title="发表于 2021-09-25 13:25:46">2021-09-25</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2021/09/15/29.RSA-%E4%BD%8E%E5%8A%A0%E5%AF%86%E6%8C%87%E6%95%B0(%E5%B9%BF%E6%92%AD)%E6%94%BB%E5%87%BB/" title="RSA-8 低加密指数广播攻击"><img data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/RSA-8.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="RSA-8 低加密指数广播攻击"/></a><div class="content"><a class="title" href="/2021/09/15/29.RSA-%E4%BD%8E%E5%8A%A0%E5%AF%86%E6%8C%87%E6%95%B0(%E5%B9%BF%E6%92%AD)%E6%94%BB%E5%87%BB/" title="RSA-8 低加密指数广播攻击">RSA-8 低加密指数广播攻击</a><time datetime="2021-09-15T15:13:10.000Z" title="发表于 2021-09-15 23:13:10">2021-09-15</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2021/09/11/28.RSA-%E4%BD%8E%E8%A7%A3%E5%AF%86%E6%8C%87%E6%95%B0%E6%94%BB%E5%87%BB/" title="RSA-7 低解密指数攻击"><img data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/RSA-7.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="RSA-7 低解密指数攻击"/></a><div class="content"><a class="title" href="/2021/09/11/28.RSA-%E4%BD%8E%E8%A7%A3%E5%AF%86%E6%8C%87%E6%95%B0%E6%94%BB%E5%87%BB/" title="RSA-7 低解密指数攻击">RSA-7 低解密指数攻击</a><time datetime="2021-09-11T05:23:15.000Z" title="发表于 2021-09-11 13:23:15">2021-09-11</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2021/09/04/27.RSA-%E5%85%B1%E6%A8%A1%E6%94%BB%E5%87%BB/" title="RSA-6 共模攻击"><img data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/RSA-6.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="RSA-6 共模攻击"/></a><div class="content"><a class="title" href="/2021/09/04/27.RSA-%E5%85%B1%E6%A8%A1%E6%94%BB%E5%87%BB/" title="RSA-6 共模攻击">RSA-6 共模攻击</a><time datetime="2021-09-04T08:17:54.000Z" title="发表于 2021-09-04 16:17:54">2021-09-04</time></div></div></div></div></div></div></div></main><footer id="footer"><div id="footer-wrap"><div class="copyright">&copy;2020 - 2024 By Ron</div><div class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly</a></div><div class="footer_custom_text">Hi, welcome to my <a target="_blank" rel="noopener" href="https://lucxer.tech/">blog</a>!</div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="font-plus" type="button" title="放大字体"><i class="fas fa-plus"></i></button><button id="font-minus" type="button" title="缩小字体"><i class="fas fa-minus"></i></button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside_config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="直达评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><i class="fas fa-arrow-up"></i></button></div></div><div id="algolia-search"><div class="search-dialog"><div class="search-dialog__title" id="algolia-search-title">Algolia</div><div id="algolia-input-panel"><div id="algolia-search-input"></div></div><hr/><div id="algolia-search-results"><div id="algolia-hits"></div><div id="algolia-pagination"></div><div id="algolia-stats"></div></div><span class="search-close-button"><i class="fas fa-times"></i></span></div><div id="search-mask"></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page/instantpage.min.js" type="module"></script><script src="https://cdn.jsdelivr.net/npm/vanilla-lazyload/dist/lazyload.iife.min.js"></script><script src="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.js"></script><script>function panguFn () {
+  if (typeof pangu === 'object') pangu.spacingElementById('content-inner')
+  else {
+    getScript('https://cdn.jsdelivr.net/npm/pangu/dist/browser/pangu.min.js')
+      .then(() => {
+        pangu.spacingElementById('content-inner')
+      })
+  }
+}
+
+function panguInit () {
+  if (false){
+    GLOBAL_CONFIG_SITE.isPost && panguFn()
+  } else {
+    panguFn()
+  }
+}
+
+document.addEventListener('DOMContentLoaded', panguInit)</script><script src="/js/search/algolia.js"></script><script>var preloader = {
+  endLoading: () => {
+    document.body.style.overflow = 'auto';
+    document.getElementById('loading-box').classList.add("loaded")
+  },
+  initLoading: () => {
+    document.body.style.overflow = '';
+    document.getElementById('loading-box').classList.remove("loaded")
+
+  }
+}
+window.addEventListener('load',()=> {preloader.endLoading()})</script><div class="js-pjax"><script>if (!window.MathJax) {
+  window.MathJax = {
+    loader: {
+      source: {
+        '[tex]/amsCd': '[tex]/amscd'
+      }
+    },
+    tex: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"]],
+      tags: 'ams'
+    },
+    options: {
+      renderActions: {
+        findScript: [10, doc => {
+          for (const node of document.querySelectorAll('script[type^="math/tex"]')) {
+            const display = !!node.type.match(/; *mode=display/)
+            const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display)
+            const text = document.createTextNode('')
+            node.parentNode.replaceChild(text, node)
+            math.start = {node: text, delim: '', n: 0}
+            math.end = {node: text, delim: '', n: 0}
+            doc.math.push(math)
+          }
+        }, ''],
+        addClass: [200,() => {
+          document.querySelectorAll('mjx-container:not([display=\'true\']').forEach( node => {
+            const target = node.parentNode
+            if (!target.classList.contains('has-jax')) {
+              target.classList.add('mathjax-overflow')
+            }
+          })
+        }, '', false]
+      }
+    }
+  }
+  
+  const script = document.createElement('script')
+  script.src = 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js'
+  script.id = 'MathJax-script'
+  script.async = true
+  document.head.appendChild(script)
+} else {
+  MathJax.startup.document.state(0)
+  MathJax.texReset()
+  MathJax.typeset()
+}</script><script>function loadValine () {
+  function initValine () {
+    let initData = {
+      el: '#vcomment',
+      appId: 'bXVyoSRa1rEnCAScfAPp2a6J-MdYXbMMI',
+      appKey: 'MPmhrDo6YIbw4Ostjj3Dl18c',
+      placeholder: 'Please leave your footprints',
+      avatar: 'monsterid',
+      meta: 'nick,mail,link'.split(','),
+      pageSize: '10',
+      lang: 'en',
+      recordIP: false,
+      serverURLs: '',
+      emojiCDN: '',
+      emojiMaps: "",
+      enableQQ: false,
+      path: window.location.pathname,
+    }
+
+    if (true) { 
+      initData.requiredFields= ('nick,mail'.split(','))
+    }
+    
+    if (false) {
+      const otherData = false
+      initData = Object.assign({}, initData, otherData)
+    }
+    
+    const valine = new Valine(initData)
+  }
+
+  if (typeof Valine === 'function') initValine() 
+  else getScript('https://cdn.jsdelivr.net/npm/valine/dist/Valine.min.js').then(initValine)
+}
+
+if ('Valine' === 'Valine' || !true) {
+  if (true) btf.loadComment(document.querySelector('#vcomment'),loadValine)
+  else setTimeout(loadValine, 0)
+} else {
+  function loadOtherComment () {
+    loadValine()
+  }
+}</script><script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div><canvas class="fireworks" mobile="false"></canvas><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1/dist/fireworks.min.js"></script><script defer="defer" id="ribbon" src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1/dist/canvas-ribbon.min.js" size="150" alpha="0.6" zIndex="-1" mobile="false" data-click="false"></script><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1/dist/activate-power-mode.min.js"></script><script>POWERMODE.colorful = true;
+POWERMODE.shake = true;
+POWERMODE.mobile = false;
+document.body.addEventListener('input', POWERMODE);
+</script><script src="https://cdn.jsdelivr.net/npm/pjax/pjax.min.js"></script><script>let pjaxSelectors = [
+  'title',
+  '#config_change',
+  '#body-wrap',
+  '#rightside-config-hide',
+  '#rightside-config-show',
+  '.js-pjax'
+]
+
+if (false) {
+  pjaxSelectors.unshift('meta[property="og:image"]', 'meta[property="og:title"]', 'meta[property="og:url"]')
+}
+
+var pjax = new Pjax({
+  elements: 'a:not([target="_blank"])',
+  selectors: pjaxSelectors,
+  cacheBust: false,
+  analytics: false,
+  scrollRestoration: false
+})
+
+document.addEventListener('pjax:complete', function () {
+  window.refreshFn()
+
+  document.querySelectorAll('script[data-pjax]').forEach(item => {
+    const newScript = document.createElement('script')
+    const content = item.text || item.textContent || item.innerHTML || ""
+    Array.from(item.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value))
+    newScript.appendChild(document.createTextNode(content))
+    item.parentNode.replaceChild(newScript, item)
+  })
+
+  GLOBAL_CONFIG.islazyload && window.lazyLoadInstance.update()
+
+  typeof chatBtnFn === 'function' && chatBtnFn()
+  typeof panguInit === 'function' && panguInit()
+
+  if (typeof gtag === 'function') {
+    gtag('config', '', {'page_path': window.location.pathname});
+  }
+
+  typeof loadMeting === 'function' && document.getElementsByClassName('aplayer').length && loadMeting()
+
+  // Analytics
+  if (false) {
+    MtaH5.pgv()
+  }
+
+  // prismjs
+  typeof Prism === 'object' && Prism.highlightAll()
+
+  typeof preloader === 'object' && preloader.endLoading()
+})
+
+
+document.addEventListener('pjax:send', function () {
+  typeof preloader === 'object' && preloader.initLoading()
+  
+  if (window.aplayers) {
+    for (let i = 0; i < window.aplayers.length; i++) {
+      if (!window.aplayers[i].options.fixed) {
+        window.aplayers[i].destroy()
+      }
+    }
+  }
+
+  typeof typed === 'object' && typed.destroy()
+
+  //reset readmode
+  const $bodyClassList = document.body.classList
+  $bodyClassList.contains('read-mode') && $bodyClassList.remove('read-mode')
+
+})</script><script>(function(){
+  const bp = document.createElement('script');
+  const curProtocol = window.location.protocol.split(':')[0];
+  if (curProtocol === 'https') {
+    bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+  }
+  else{
+    bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+  }
+  bp.dataset.pjax = ''
+  const s = document.getElementsByTagName("script")[0];
+  s.parentNode.insertBefore(bp, s);
+})()</script></div></body></html>

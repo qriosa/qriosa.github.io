@@ -1,0 +1,520 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Windows 使用 lxrunoffline 安装 WSL、WSL2 | Ron's Blog</title><meta name="keywords" content="配置,WSL,Windows,Linux,WSL2"><meta name="author" content="Ron"><meta name="copyright" content="Ron"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta http-equiv="Cache-Control" content="no-transform"><meta http-equiv="Cache-Control" content="no-siteapp"><meta name="description" content="利用 lxrunoffline 完成 WSL 的安装，可安装到任意位置，也可备份和迁移。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Windows 使用 lxrunoffline 安装 WSL、WSL2">
+<meta property="og:url" content="https://qriosa.github.io/2020/12/28/9.WSL2%E5%AE%89%E8%A3%85/index.html">
+<meta property="og:site_name" content="Ron&#39;s Blog">
+<meta property="og:description" content="利用 lxrunoffline 完成 WSL 的安装，可安装到任意位置，也可备份和迁移。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/Install_WSL_on_Win10.png">
+<meta property="article:published_time" content="2020-12-28T10:33:52.000Z">
+<meta property="article:modified_time" content="2024-07-03T06:57:38.956Z">
+<meta property="article:author" content="Ron">
+<meta property="article:tag" content="配置">
+<meta property="article:tag" content="WSL">
+<meta property="article:tag" content="Windows">
+<meta property="article:tag" content="Linux">
+<meta property="article:tag" content="WSL2">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/Install_WSL_on_Win10.png"><link rel="shortcut icon" href="/img/favicon.ico"><link rel="canonical" href="https://qriosa.github.io/2020/12/28/9.WSL2%E5%AE%89%E8%A3%85/"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="preconnect" href="//zz.bdstatic.com"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/instantsearch.js@2.10.5/dist/instantsearch.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/instantsearch.js@2.10.5/dist/instantsearch.min.js" defer></script><script>var GLOBAL_CONFIG = { 
+  root: '/',
+  algolia: {"appId":"YJRLD9BYXZ","apiKey":"6098438f46d523cb882b858aed7b9962","indexName":"blog","hits":{"per_page":6},"languages":{"input_placeholder":"搜索文章","hits_empty":"找不到您查询的内容：${query}","hits_stats":"找到 ${hits} 条结果，用时 ${time} 毫秒"}},
+  localSearch: undefined,
+  translate: undefined,
+  noticeOutdate: {"limitDay":365,"position":"top","messagePrev":"It has been","messageNext":"days since the last update, the content of the article may be outdated."},
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '天',
+  date_suffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"你已切换为繁体","cht_to_chs":"你已切换为简体","day_to_night":"你已切换为深色模式","night_to_day":"你已切换为浅色模式","bgLight":"#49b1f5","bgDark":"#121212","position":"bottom-left"},
+  source: {
+    jQuery: 'https://cdn.jsdelivr.net/npm/jquery@latest/dist/jquery.min.js',
+    justifiedGallery: {
+      js: 'https://cdn.jsdelivr.net/npm/justifiedGallery/dist/js/jquery.justifiedGallery.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/justifiedGallery/dist/css/justifiedGallery.min.css'
+    },
+    fancybox: {
+      js: 'https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@latest/dist/jquery.fancybox.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@latest/dist/jquery.fancybox.min.css'
+    }
+  },
+  isPhotoFigcaption: true,
+  islazyload: true,
+  isanchor: true
+};
+
+var saveToLocal = {
+  set: function setWithExpiry(key, value, ttl) {
+    const now = new Date()
+    const expiryDay = ttl * 86400000
+    const item = {
+      value: value,
+      expiry: now.getTime() + expiryDay,
+    }
+    localStorage.setItem(key, JSON.stringify(item))
+  },
+
+  get: function getWithExpiry(key) {
+    const itemStr = localStorage.getItem(key)
+
+    if (!itemStr) {
+      return undefined
+    }
+    const item = JSON.parse(itemStr)
+    const now = new Date()
+
+    if (now.getTime() > item.expiry) {
+      localStorage.removeItem(key)
+      return undefined
+    }
+    return item.value
+  }
+}
+
+// https://stackoverflow.com/questions/16839698/jquery-getscript-alternative-in-native-javascript
+const getScript = url => new Promise((resolve, reject) => {
+  const script = document.createElement('script')
+  script.src = url
+  script.async = true
+  script.onerror = reject
+  script.onload = script.onreadystatechange = function() {
+    const loadState = this.readyState
+    if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+    script.onload = script.onreadystatechange = null
+    resolve()
+  }
+  document.head.appendChild(script)
+})</script><script id="config_change">var GLOBAL_CONFIG_SITE = { 
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: true,
+  isToc: true,
+  postUpdate: '2024-07-03 14:57:38'
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(function () {  window.activateDarkMode = function () {
+    document.documentElement.setAttribute('data-theme', 'dark')
+    if (document.querySelector('meta[name="theme-color"]') !== null) {
+      document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+    }
+  }
+  window.activateLightMode = function () {
+    document.documentElement.setAttribute('data-theme', 'light')
+   if (document.querySelector('meta[name="theme-color"]') !== null) {
+      document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+    }
+  }
+  const autoChangeMode = '1'
+  const t = saveToLocal.get('theme')
+  if (autoChangeMode === '1') {
+    const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches
+    const isLightMode = window.matchMedia('(prefers-color-scheme: light)').matches
+    const isNotSpecified = window.matchMedia('(prefers-color-scheme: no-preference)').matches
+    const hasNoSupport = !isDarkMode && !isLightMode && !isNotSpecified
+    if (t === undefined) {
+      if (isLightMode) activateLightMode()
+      else if (isDarkMode) activateDarkMode()
+      else if (isNotSpecified || hasNoSupport) {
+        const now = new Date()
+        const hour = now.getHours()
+        const isNight = hour <= 6 || hour >= 18
+        isNight ? activateDarkMode() : activateLightMode()
+      }
+      window.matchMedia('(prefers-color-scheme: dark)').addListener(function (e) {
+        if (saveToLocal.get('theme') === undefined) {
+          e.matches ? activateDarkMode() : activateLightMode()
+        }
+      })
+    } else if (t === 'light') activateLightMode()
+    else activateDarkMode()
+  } else if (autoChangeMode === '2') {
+    const now = new Date()
+    const hour = now.getHours()
+    const isNight = hour <= 6 || hour >= 18
+    if (t === undefined) isNight ? activateDarkMode() : activateLightMode()
+    else if (t === 'light') activateLightMode()
+    else activateDarkMode()
+  } else {
+    if (t === 'dark') activateDarkMode()
+    else if (t === 'light') activateLightMode()
+  }const asideStatus = saveToLocal.get('aside-status')
+if (asideStatus !== undefined) {
+   if (asideStatus === 'hide') {
+     document.documentElement.classList.add('hide-aside')
+   } else {
+     document.documentElement.classList.remove('hide-aside')
+   }
+}const fontSizeVal = saveToLocal.get('global-font-size')
+if (fontSizeVal !== undefined) {
+  document.documentElement.style.setProperty('--global-font-size', fontSizeVal + 'px')
+}})()</script><meta name="generator" content="Hexo 5.3.0"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="author-avatar"><img class="avatar-img" data-lazy-src="/img/kid.jpg" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data"><div class="data-item is-center"><div class="data-item-link"><a href="/archives/"><div class="headline">文章</div><div class="length-num">31</div></a></div></div><div class="data-item is-center"><div class="data-item-link"><a href="/tags/"><div class="headline">标签</div><div class="length-num">58</div></a></div></div><div class="data-item is-center"><div class="data-item-link"><a href="/categories/"><div class="headline">分类</div><div class="length-num">6</div></a></div></div></div><hr/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 时间轴</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> 关于</span></a></div></div></div></div><div id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/Install_WSL_on_Win10.png)"><nav id="nav"><span id="blog_name"><a id="site-name" href="/">Ron's Blog</a></span><div id="menus"><div id="search-button"><a class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 时间轴</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> 关于</span></a></div></div><div id="toggle-menu"><a class="site-page"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="post-info"><h1 class="post-title">Windows 使用 lxrunoffline 安装 WSL、WSL2</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2020-12-28T10:33:52.000Z" title="发表于 2020-12-28 18:33:52">2020-12-28</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2024-07-03T06:57:38.956Z" title="更新于 2024-07-03 14:57:38">2024-07-03</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E7%8E%AF%E5%A2%83%E9%85%8D%E7%BD%AE/">环境配置</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">字数总计:</span><span class="word-count">3.2k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>11分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">阅读量:</span><span id="busuanzi_value_page_pv"></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><h1 id="0x01-写在前面"><a href="#0x01-写在前面" class="headerlink" title="0x01 写在前面"></a>0x01 写在前面</h1><p>笔者认为似乎应该在前面写点什么，但是又不知道写点什么，于是就写了这段话。或许笔者正在思考怎么写这段话。</p>
+<p>关于 <code>WSL</code> 有什么好，或者有什么比较方便的地方，这里不多赘述。</p>
+<p><strong>多图预警。</strong></p>
+<p><br></p>
+<h1 id="0x02-官方教程配置环境"><a href="#0x02-官方教程配置环境" class="headerlink" title="0x02 官方教程配置环境"></a>0x02 官方教程配置环境</h1><h2 id="2-1-加入体验计划"><a href="#2-1-加入体验计划" class="headerlink" title="2.1 加入体验计划"></a>2.1 加入体验计划</h2><p>首先进入 <code>设置</code> → <code>更新和安全</code> → <code>Windows预览体验计划</code> 然后选择开始，加入此计划。然后选择 <code>Dev</code> ，然后一路默认。</p>
+<blockquote>
+<p>如果点进来是一片空白，根据<a target="_blank" rel="noopener" href="https://answers.microsoft.com/zh-hans/insider/forum/insider_wintp-insider_install/windows%E9%A2%84%E8%A7%88%E4%BD%93%E9%AA%8C/14d3002b-03ac-459e-b518-34231b1727e0?auth=1">官方</a>提示，需要修改一个地方：</p>
+<p>在设置中搜索 <code>诊断数据</code>，打开 <code>诊断和数据</code>，修改为 <code>可选诊断数据</code> 即可出现上述的界面，而不是白的了。可参考。</p>
+</blockquote>
+<p><img src= "/img/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/image-20201228193934870.png" alt="Windows预览体验计划"></p>
+<p><img src= "/img/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/image-20201228193955261.png" alt="Windows预览体验计划2"></p>
+<p><img src= "/img/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/image-20201228194013308.png" alt="Windows预览体验计划3"></p>
+<p><br></p>
+<h3 id="2-1-2-更新系统版本"><a href="#2-1-2-更新系统版本" class="headerlink" title="2.1.2 更新系统版本"></a>2.1.2 更新系统版本</h3><p>重启之后，进入设置中的 <code>Windows 更新</code>，在下图所示的 <code>高级选项</code> 中选择 <code>更新 Windows 时接受其他 Microsoft 产品更新</code>。</p>
+<p>然后返回更新页面，开始进行更新，这个过程可能会反复很多次，耗时也比较久。</p>
+<p><img src= "/img/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/image-20201228194919061.png" alt="高级选项"></p>
+<p><img src= "/img/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/image-20201228194824800.png" alt="检测到更新"></p>
+<p><img src= "/img/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/image-20201228195057696.png" alt="开始下载更新"></p>
+<p><img src= "/img/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/image-20201228203158530.png" alt="等待重启更新"></p>
+<p><br></p>
+<h3 id="2-1-3-检查系统版本"><a href="#2-1-3-检查系统版本" class="headerlink" title="2.1.3 检查系统版本"></a>2.1.3 检查系统版本</h3><p>更新完毕后，需要检查当前的系统版本是否满足要求了。 按住 <code>win</code> + <code>R</code> 输入命令：<code>winver</code> ，即可以查看下图的信息。</p>
+<p>WSL要求系统版本 2004 以上，微软官方说 OS 内部版本为 19041 以上。</p>
+<p>而想要安装 CUDA，则要求系统不仅仅是版本 2004， 并且 OS 内部版本必须为 20145 之后。</p>
+<p><strong>所以，读者根据自己的需求自行决定。</strong></p>
+<p><img src= "/img/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/image-20201229140249702.png" alt="系统信息"></p>
+<p><br></p>
+<h3 id="2-1-4-打开-WSL-选项"><a href="#2-1-4-打开-WSL-选项" class="headerlink" title="2.1.4 打开 WSL 选项"></a>2.1.4 打开 WSL 选项</h3><h4 id="2-1-4-1-命令行打开-WSL"><a href="#2-1-4-1-命令行打开-WSL" class="headerlink" title="2.1.4.1 命令行打开 WSL"></a>2.1.4.1 命令行打开 WSL</h4><p>以管理员权限运行 <code>PowerShell</code> 并输入下面的命令，若提示是否要重启，则选择暂时不重启。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Windows-Subsystem-Linux</span><br><span class="line"></span><br><span class="line">dism.exe &#x2F;online &#x2F;enable-feature &#x2F;featurename:Microsoft-Windows-Subsystem-Linux &#x2F;all &#x2F;norestart</span><br></pre></td></tr></table></figure>
+<p>两个命令都运行完毕后，手动重启。</p>
+<h4 id="2-1-4-2-检查启动是否成功"><a href="#2-1-4-2-检查启动是否成功" class="headerlink" title="2.1.4.2 检查启动是否成功"></a>2.1.4.2 检查启动是否成功</h4><p>重启之后，在 <code>控制面板</code> → <code>程序</code> → <code>启动或关闭Windows功能</code> 检查是否开启了 <code>适用于Linux的Windows子系统</code>。（有可能是英文</p>
+<p><img src= "/img/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/image-20201228210417296.png" alt="检查WSL启动成功"></p>
+<p>确认开启无误后，在管理员 <code>PowerShell</code> 中运行下面命令</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">dism.exe &#x2F;online &#x2F;enable-feature &#x2F;featurename:VirtualMachinePlatform &#x2F;all &#x2F;norestart</span><br></pre></td></tr></table></figure>
+<p>然后重启。</p>
+<p><br></p>
+<h3 id="2-1-5-下载-msi-安装包"><a href="#2-1-5-下载-msi-安装包" class="headerlink" title="2.1.5 下载 msi 安装包"></a>2.1.5 下载 msi 安装包</h3><p>从官方下载对应的安装包文件，然后直接一瞬安装。唯一需要注意的就是自己系统的版本和CPU架构。</p>
+<p>msi 安装包地址：<a target="_blank" rel="noopener" href="https://wslstorestorage.blob.core.windows.net/wslblob/wsl_update_x64.msi">download</a>。</p>
+<p>然后双击运行</p>
+<p><img src= "/img/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/image-20201228211448330.png" alt="进行安装"></p>
+<p>一路默认就好</p>
+<p><br></p>
+<h3 id="2-1-6-设置默认-WSL2"><a href="#2-1-6-设置默认-WSL2" class="headerlink" title="2.1.6 设置默认 WSL2"></a>2.1.6 设置默认 WSL2</h3><p>然后在管理员 <code>PowerShell</code> 中通过如下命令设置默认版本为 <code>WSL2</code></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">wsl --set-default-version 2</span><br></pre></td></tr></table></figure>
+<p><br></p>
+<h2 id="2-2-lxrunoffline-工具安装"><a href="#2-2-lxrunoffline-工具安装" class="headerlink" title="2.2 lxrunoffline  工具安装"></a>2.2 lxrunoffline  工具安装</h2><p>下面将使用工具 <code>lxrunoffline</code> 进行后续的安装，若读者只想从官方一样用微软商店进行安装的话，移步<a target="_blank" rel="noopener" href="https://docs.microsoft.com/en-us/windows/wsl/install-win10#step-5---set-wsl-2-as-your-default-version">官方教程</a>，后面就比较简单。 </p>
+<h3 id="2-2-1-lxrunoffline-简介"><a href="#2-2-1-lxrunoffline-简介" class="headerlink" title="2.2.1 lxrunoffline  简介"></a>2.2.1 lxrunoffline  简介</h3><blockquote>
+<p><a target="_blank" rel="noopener" href="https://github.com/DDoSolitary/LxRunOffline">lxrunoffline</a> 工具是一个 GitHub 上开发的很好用的管理工具，使用这个工具具有众多好处：</p>
+<p>可以安装任意发行版到任意目录、转移已安装的 WSL 目录、备份 WSL、设置默认用户和修改环境变量等操作，完全碾压 WSL、wslconfig 这些简陋原生管理命令。</p>
+</blockquote>
+<p><br></p>
+<h3 id="2-2-2-lxrunoffline-的安装"><a href="#2-2-2-lxrunoffline-的安装" class="headerlink" title="2.2.2 lxrunoffline 的安装"></a>2.2.2 lxrunoffline 的安装</h3><p>虽然 <code>lxrunoffline</code> 从笔者看的博文来看拥有多重安装方式，但是个人觉得其他的方式需要额外配置很多环境或者工具。不如直接手动安装来得好和轻便。</p>
+<blockquote>
+<p>  其他方式有如 使用 Chocolatey 安装， 使用 Scoop 安装。这部分读者有兴趣可以参阅这个<a target="_blank" rel="noopener" href="https://p3terx.com/archives/manage-wsl-with-lxrunoffline.html">博文</a>。</p>
+</blockquote>
+<h4 id="2-2-2-1-下载-lxrunoffline"><a href="#2-2-2-1-下载-lxrunoffline" class="headerlink" title="2.2.2.1 下载 lxrunoffline"></a>2.2.2.1 下载 lxrunoffline</h4><p>首先是下载 <code>lxrunoffline</code>，<a target="_blank" rel="noopener" href="https://github.com/DDoSolitary/LxRunOffline/releases">地址</a>。</p>
+<p>然后选择合适的版本，我也不知道区别，只是我认识 mingw 所以就选择了这个。下载解压之后里面有个 <code>LxRunOffline.exe</code>，然后将 <code>LxRunOffline.exe</code> 放到某一个你觉得合适的地方，然后为了方便，建议添加环境变量。</p>
+<p><img src= "/img/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/image-20201228232704365.png" alt="下载lxrunoffline"></p>
+<p><img src= "/img/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/image-20201229144215709.png" alt="添加lxrunoffline到环境变量"></p>
+<p>然后就可以愉快在命令行中使用这个命令了 <code>lxrunoffline</code> 。</p>
+<p><img src= "/img/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/image-20201229144254301.png" alt="lxrunoffline 命令"></p>
+<p>至此 <code>lxrunoffline</code> 安装完毕。</p>
+<h4 id="2-2-2-2-lxrunoffline-命令介绍"><a href="#2-2-2-2-lxrunoffline-命令介绍" class="headerlink" title="2.2.2.2 lxrunoffline 命令介绍"></a>2.2.2.2 lxrunoffline 命令介绍</h4><p>细心的读者已经发现上图中已经显示了一种查看help的方式，直接缺省就会打印help信息，这里简要列举了部分。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line">l , list - 列出所有已安装的发行版。</span><br><span class="line">gd , get-default - 获取 bash.exe 使用的默认发行版。</span><br><span class="line">sd , set-default - 设置 bash.exe 使用的默认发行版。</span><br><span class="line">i , install - 安装新的发行版。</span><br><span class="line">sd , set-default - 设置 bash.exe 使用的默认发行版。</span><br><span class="line">ui , uninstall - 卸载发行版。</span><br><span class="line">rg , register - 注册现有的安装目录。</span><br><span class="line">ur , unregister - 取消注册发行版但不删除安装目录。</span><br><span class="line">m , move - 将发行版移动到新目录。</span><br><span class="line">d , duplicate - 在新目录中复制现有发行版。</span><br><span class="line">e , export - 将发行版的文件系统导出到.tar.gz 文件，该文件可以通过 install 命令安装。</span><br><span class="line">r , run - 在发行版中运行命令。</span><br><span class="line">di , get-dir - 获取发行版的安装目录。</span><br><span class="line">gv , get-version - 获取发行版的文件系统版本。</span><br><span class="line">ge , get-env - 获取发行版的默认环境变量。</span><br><span class="line">se , set-env - 设置发行版的默认环境变量。</span><br><span class="line">ae , add-env - 添加到发行版的默认环境变量。</span><br><span class="line">re , remove-env - 从发行版的默认环境变量中删除。</span><br><span class="line">gu , get-uid - 获取发行版的默认用户的 UID。</span><br><span class="line">su , set-uid - 设置发行版的默认用户的 UID。</span><br><span class="line">gk , get-kernelcmd - 获取发行版的默认内核命令行。</span><br><span class="line">sk , set-kernelcmd - 设置发行版的默认内核命令行。</span><br><span class="line">gf , get-flags - 获取发行版的一些标志。有关详细信息，请参考这里。</span><br><span class="line">sf , set-flags - 设置发行版的一些标志。有关详细信息，请参考这里。</span><br><span class="line">s , shortcut - 创建启动发行版的快捷方式。</span><br><span class="line">ec , export-config - 将发行版配置导出到 XML 文件。</span><br><span class="line">ic , import-config - 从 XML 文件导入发行版的配置。</span><br><span class="line">sm , summary - 获取发行版的一般信息。</span><br></pre></td></tr></table></figure>
+<p>更多使用功能和常用功能请参阅<a target="_blank" rel="noopener" href="https://p3terx.com/archives/manage-wsl-with-lxrunoffline.html">这里</a>。</p>
+<p><br></p>
+<h2 id="2-3-发行版的安装"><a href="#2-3-发行版的安装" class="headerlink" title="2.3  发行版的安装"></a>2.3  发行版的安装</h2><h3 id="2-3-1-distros-下载"><a href="#2-3-1-distros-下载" class="headerlink" title="2.3.1 distros 下载"></a>2.3.1 distros 下载</h3><p>使用此工具可以按照任意版本的有效的 WSL 发行版本。这里我选择了 <code>Ubuntu18.04</code> ，本来选择 <code>kali</code> 的，但是 <code>kali</code> 安装失败了。于是还是就使用 <code>Ubuntu</code> 了。</p>
+<p>官方发行版文件列表在<a target="_blank" rel="noopener" href="https://docs.microsoft.com/en-us/windows/wsl/install-manual#installing-your-distro">这里</a>。点击选择一个合适的版本，这里笔者选择了 <code>Ubuntu18.04</code> 。<code>ARM</code> 架构的朋友自己选择对应的版本。</p>
+<p><img src= "/img/loading.gif" data-lazy-src="C:\Users\chegn\AppData\Roaming\Typora\typora-user-images\image-20201228234022577.png" alt="下载列表"></p>
+<p><br></p>
+<h3 id="2-3-2-解压安装"><a href="#2-3-2-解压安装" class="headerlink" title="2.3.2 解压安装"></a>2.3.2 解压安装</h3><p>下载的压缩包解压之后里面有一个 <code>install.tar.gz</code> ，然后就可以安装了。</p>
+<blockquote>
+<p>为了避免不必要的麻烦，以下都是管理员权限在运行命令</p>
+</blockquote>
+<p><img src= "/img/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/image-20201229145235756.png" alt="压缩包内容"></p>
+<p>先在你想存储此 <code>WSL</code> 的地方建立合适的文件夹。因为笔者有多个不同版本的 <code>WSL</code> ，为了方便在E盘下建立了一个目录 <code>WSL</code>，然后建立了一个文件夹 <code>Ubuntu18CUDA</code> 用于存储此 <code>Ubuntu18.04</code> 的发行版。</p>
+<p>上述准备完毕后，然后在 <code>PowerShell</code> 中运行下面的命令，</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"># lxrunoffline i -n &lt;WSL名称&gt; -d &lt;安装路径&gt; -f &lt;安装包路径&gt;install.tar.gz</span><br><span class="line"></span><br><span class="line">lxrunoffline i -n &quot;Ubuntu18CUDA&quot; -d &quot;G:\WSL\Ubuntu18CUDA&quot; -f &quot;C:\Users\chegn\Downloads\Compressed\Ubuntu_1804.2019.522.0_x64\install.tar.gz&quot;</span><br></pre></td></tr></table></figure>
+<p>如下图所示：</p>
+<p><img src= "/img/loading.gif" data-lazy-src="https://raw.githubusercontent.com/qriosa/picgo-blog/master/img/image-20201228215355213.png" alt="安装发行版"></p>
+<p><br></p>
+<h3 id="2-3-3-设置用户"><a href="#2-3-3-设置用户" class="headerlink" title="2.3.3 设置用户"></a>2.3.3 设置用户</h3><p>为了方便我们需要设置用户，笔者个人比较喜欢随时都是 <code>root</code>，但是这个不怎安全。</p>
+<h4 id="2-3-3-1-设置-root-为默认用户"><a href="#2-3-3-1-设置-root-为默认用户" class="headerlink" title="2.3.3.1 设置 root 为默认用户"></a>2.3.3.1 设置 root 为默认用户</h4><p><code>root</code>  用户的 <code>UID</code> 为 <code>0</code>，所以可以直接在 <code>Pow­er­Shell</code> 输入以下命令进行设置：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">lxrunoffline su -n &lt;WSL名称&gt; -v 0</span><br></pre></td></tr></table></figure>
+<p>设置默认用户为 <code>root</code></p>
+<p><img src= "/img/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/image-20201228215451721.png" alt="设置默认用户 root"></p>
+<h4 id="2-3-3-2-设置普通用户为默认用户"><a href="#2-3-3-2-设置普通用户为默认用户" class="headerlink" title="2.3.3.2 设置普通用户为默认用户"></a>2.3.3.2 设置普通用户为默认用户</h4><p>使用 <code>lxrunoffline</code> 新安装的 <code>WSL</code> 默认是以 <code>root</code> 用户登录，如果你需要默认以普通用户进行登录，就需要进行下面的操作。</p>
+<p>首先运行 <code>WSL</code></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">lxrunoffline r -n &lt;WSL名称&gt;</span><br></pre></td></tr></table></figure>
+<p>输入以下命令创建用户：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">useradd -m -s &#x2F;bin&#x2F;bash &lt;用户名&gt;</span><br></pre></td></tr></table></figure>
+<p>然后对该用户设置密码，输入命令后会提示输入两次密码。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">passwd &lt;用户名&gt;</span><br></pre></td></tr></table></figure>
+<p>授予该用户 <code>sudo</code> 权限。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">usermod -aG sudo &lt;用户名&gt;</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>为了保持和微软商店安装的效果一致，这里提及的方法是把用户添加到 sudo 用户组。其他关于 sudo 权限的设置方法以及免密设置可参考《<a target="_blank" rel="noopener" href="https://p3terx.com/archives/linux-grants-normal-user-sudo-permission.html">Linux 中授予普通用户 sudo 权限的正确方法</a>》这篇文章。</p>
+</blockquote>
+<p>查看用户 UID ，一般是 <code>1000</code>。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">id -u &lt;用户名&gt;</span><br></pre></td></tr></table></figure>
+<p>按 <code>Ctrl</code>+<code>D</code> 退出 <code>WSL</code> ，在 <code>Pow­er­Shell</code> 中输入以下命令：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">lxrunoffline su -n &lt;WSL名称&gt; -v 1000</span><br></pre></td></tr></table></figure>
+<p><br></p>
+<h2 id="2-4-进入验证"><a href="#2-4-进入验证" class="headerlink" title="2.4 进入验证"></a>2.4 进入验证</h2><p>通过下面命令，可以启动一个指定的发行版</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">lxrunoffline r -n &lt;WSL名称&gt;</span><br></pre></td></tr></table></figure>
+<p>然后一瞬进入，由于笔者设置了就是管理员root，所以不用sudo。</p>
+<p><img src= "/img/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/image-20201229133649835.png" alt="测试"></p>
+<p>于是到这里 <code>WSL</code> 就安装完毕啦，你可以拿去玩好玩的了。</p>
+<p><br></p>
+<h2 id="2-5-修改配色"><a href="#2-5-修改配色" class="headerlink" title="2.5 修改配色"></a>2.5 修改配色</h2><p>如果自己 <code>Windows Terminal</code> 有配色的应该就不用修改配色了，没有的，想添加 <code>Windows Terminal</code> 配色的可以参考<a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/163765431">这个</a>。</p>
+<p>若无 <code>Windows Terminal</code> 或者只是想在修改这个终端的配色（事实上通过 <code>Windows Terminal</code> 也可以实现，但是这里记录另一种方法。）</p>
+<p>编辑文件 <code>~/.bashrc</code> 来实现</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">vim ~&#x2F;.bashrc</span><br></pre></td></tr></table></figure>
+<p>然后在<strong>最后面</strong>添加下面的代码</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">PS1=<span class="string">&#x27;$&#123;debian_chroot:+($debian_chroot)&#125;\[\033[01;32;1m\]\u\[\033[00;32;1m\]@\[\033[01;32;1m\]\h\[\033[00;31;1m\]:\[\033[00;34;1m\]\w \[\033[01;33;1m\]\$ \[\033[0;37;1m\]&#x27;</span></span><br><span class="line"><span class="comment"># 设置u为颜色为绿色，@为紫色，h为紫色，“:”为红色，w为蓝色，“$”为黄色，后面打出来的字为白色</span></span><br></pre></td></tr></table></figure>
+<p>然后使之生效 <code>source ~/.bashrc</code> 。</p>
+<p>然后就是这个样子</p>
+<p><img src= "/img/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/image-20201230171434892.png" alt="修改配色后"></p>
+<p>如果 <code>Windows Terminal</code> 本身有配色，也可以叠加，大概是这个样子</p>
+<p><img src= "/img/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/image-20201230171529808.png" alt="叠加配色"></p>
+<p>下面还有更多的颜色对应方案，读者可以自行设置自己喜欢的。</p>
+<p>颜色代码:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">字背景颜色: 40–49 字体颜色: 30—39</span><br><span class="line">40: 黑 　　　　　　 30: 黑</span><br><span class="line">41: 红 　　　　　　 31: 红</span><br><span class="line">42: 绿 　　　　　　 32: 绿</span><br><span class="line">43: 黄 　　　　　　 33: 黄</span><br><span class="line">44: 蓝 　　　　　　 34: 蓝</span><br><span class="line">45: 紫 　　　　　　 35: 紫</span><br><span class="line">46: 深绿 　　　　　　 36: 深绿</span><br><span class="line">47: 白色 　　　　　　 37: 白色</span><br></pre></td></tr></table></figure>
+<p>ANSI控制码:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">\033[0m 关闭所有属性</span><br><span class="line">\033[1m 设置高亮度</span><br><span class="line">\033[4m 下划线</span><br><span class="line">\033[5m 闪烁</span><br><span class="line">\033[7m 反显</span><br><span class="line">\033[8m 消隐</span><br><span class="line">\033[30m – \033[37m 设置前景色</span><br><span class="line">\033[40m – \033[47m 设置背景色</span><br><span class="line">\033[nA 光标上移n行</span><br><span class="line">\03[nB 光标下移n行</span><br><span class="line">\033[nC 光标右移n行</span><br><span class="line">\033[nD 光标左移n行</span><br></pre></td></tr></table></figure>
+<p>默认的特殊符号所代表的意义：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">\d ：代表日期，格式为weekday month date，例如：“Mon Aug 1”</span><br><span class="line">\H ：完整的主机名称。例如：我的机器名称为：fc4.linux，则这个名称就是fc4.linux</span><br><span class="line">\h ：仅取主机的第一个名字，如上例，则为fc4，.linux则被省略</span><br><span class="line">\t ：显示时间为24小时格式，如：HH：MM：SS</span><br><span class="line">\T ：显示时间为12小时格式</span><br><span class="line">\A ：显示时间为24小时格式：HH：MM</span><br><span class="line">\u ：当前用户的账号名称</span><br><span class="line">\v ：BASH的版本信息</span><br><span class="line">\w ：完整的工作目录名称。家目录会以 ~代替</span><br><span class="line">\W ：利用basename取得工作目录名称，所以只会列出最后一个目录</span><br><span class="line"># ：下达的第几个命令</span><br><span class="line">$ ：提示字符，如果是root时，提示符为：# ，普通用户则为：$</span><br></pre></td></tr></table></figure>
+<p><br></p>
+<h2 id="2-6-桌面安装"><a href="#2-6-桌面安装" class="headerlink" title="2.6 桌面安装"></a>2.6 桌面安装</h2><p>根据参考的教程，还可以在 <code>WSL</code> 中安装远程桌面，通过 Windows 的远程桌面进行连接，Windows 不需要再安装其他东西。还是挺香的。</p>
+<p>使用了xrdp+xface4，参考链接为：<a target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV1Lz4y1975a">here</a>。</p>
+<p>笔者暂时没有这个需求，就没有整。</p>
+<p><br></p>
+<h1 id="0x03-遇到的坑"><a href="#0x03-遇到的坑" class="headerlink" title="0x03 遇到的坑"></a>0x03 遇到的坑</h1><p>使用此方法搭建可能会遇到一个坑：lxrunoffline 可能没认识 <code>WSL2</code> 所以设置的 <code>WSL2</code> 默认版本可能就没有生效，按照的版本就是 <code>WSL1</code> 的，所以如果某些要求2的版本（如对 <code>CUDA</code> 的支持）则需要先将其升级为 <code>WSL2</code> 的才可以。</p>
+<p>这里部分请参考<a target="_blank" rel="noopener" href="https://lucxer.tk/2020/12/29/WSL+CUDA/">另外一篇</a>。</p>
+<p><br></p>
+<h1 id="0x04-总结"><a href="#0x04-总结" class="headerlink" title="0x04 总结"></a>0x04 总结</h1><p>东西确实不错，比虚拟机启动快，随时可以切换，文件系统和Windows共享，可以随便迁移，也可以开启桌面通过远程桌面进行连接，可以保存快照，<code>WSL2</code> 还可以使用 <code>CUDA</code> 了。我想除了某些神奇病毒的研究需要使用虚拟机以进行隔离意外，我暂时想不到不用 <code>WSL</code> 的地方了。</p>
+<p>总之，我局的很不错。</p>
+<p><br></p>
+<h1 id="0x05-参考"><a href="#0x05-参考" class="headerlink" title="0x05 参考"></a>0x05 参考</h1><p>lxrunoffline+wsl: <a target="_blank" rel="noopener" href="https://p3terx.com/archives/manage-wsl-with-lxrunoffline.html">https://p3terx.com/archives/manage-wsl-with-lxrunoffline.html</a></p>
+<p>wsl2 官方教程: <a target="_blank" rel="noopener" href="https://docs.microsoft.com/en-us/windows/wsl/install-win10">https://docs.microsoft.com/en-us/windows/wsl/install-win10</a></p>
+<p>配色参考： <a target="_blank" rel="noopener" href="https://blog.csdn.net/weixin_36778746/article/details/101150231">https://blog.csdn.net/weixin_36778746/article/details/101150231</a></p>
+<p>Windows Terminal 配色参考：<a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/163765431">https://zhuanlan.zhihu.com/p/163765431</a></p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta">文章作者: </span><span class="post-copyright-info"><a href="mailto:undefined">Ron</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta">文章链接: </span><span class="post-copyright-info"><a href="https://qriosa.github.io/2020/12/28/9.WSL2%E5%AE%89%E8%A3%85/">https://qriosa.github.io/2020/12/28/9.WSL2%E5%AE%89%E8%A3%85/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta">版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来自 <a href="https://qriosa.github.io" target="_blank">Ron's Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/%E9%85%8D%E7%BD%AE/">配置</a><a class="post-meta__tags" href="/tags/WSL/">WSL</a><a class="post-meta__tags" href="/tags/Windows/">Windows</a><a class="post-meta__tags" href="/tags/Linux/">Linux</a><a class="post-meta__tags" href="/tags/WSL2/">WSL2</a></div><div class="post_share"><div class="addthis_inline_share_toolbox"></div><script src="//s7.addthis.com/js/300/addthis_widget.js#pubid=5fb3e45d5f9ff11c" async="async"></script></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i> 打赏<div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="/img/wechat.png" target="_blank"><img class="post-qr-code-img" data-lazy-src="/img/wechat.png" alt="wechat"/></a><div class="post-qr-code-desc">wechat</div></li><li class="reward-item"><a href="/img/alipay.png" target="_blank"><img class="post-qr-code-img" data-lazy-src="/img/alipay.png" alt="alipay"/></a><div class="post-qr-code-desc">alipay</div></li></ul></div></div></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/2020/12/29/10.WSL+CUDA/"><img class="prev-cover" data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/wsl-launch-upt-0625-rz.png" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="pagination-info"><div class="label">上一篇</div><div class="prev_info">Windows 下利用 WSL2 配置 CUDA 和 pyCUDA</div></div></a></div><div class="next-post pull-right"><a href="/2020/12/11/7.thoses_things_er/"><img class="next-cover" data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/thing.gif" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">哪些事er</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span> 相关推荐</span></div><div class="relatedPosts-list"><div><a href="/2020/12/29/10.WSL+CUDA/" title="Windows 下利用 WSL2 配置 CUDA 和 pyCUDA"><img class="cover" data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/wsl-launch-upt-0625-rz.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2020-12-29</div><div class="title">Windows 下利用 WSL2 配置 CUDA 和 pyCUDA</div></div></a></div><div><a href="/2020/09/15/4.latex配置/" title="Windows 下 latex 配置"><img class="cover" data-lazy-src="https://www.latex-project.org/img/latex-project-logo.svg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2020-09-15</div><div class="title">Windows 下 latex 配置</div></div></a></div><div><a href="/2020/08/09/1.hexo-github-zeit搭建博客/" title="hexo+github+zeit搭建博客"><img class="cover" data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/landscape.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2020-08-09</div><div class="title">hexo+github+zeit搭建博客</div></div></a></div></div></div><hr/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div class="vcomment" id="vcomment"></div></div></div></div></div><div class="aside_content" id="aside_content"><div class="card-widget card-info"><div class="card-content"><div class="card-info-avatar is-center"><img class="avatar-img" data-lazy-src="/img/kid.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/><div class="author-info__name">Ron</div><div class="author-info__description">retired OIer, Novice CTF Enthusiast</div></div><div class="card-info-data"><div class="card-info-data-item is-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">31</div></a></div><div class="card-info-data-item is-center"><a href="/tags/"><div class="headline">标签</div><div class="length-num">58</div></a></div><div class="card-info-data-item is-center"><a href="/categories/"><div class="headline">分类</div><div class="length-num">6</div></a></div></div><a class="button--animated" id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/LCX666"><i class="fab fa-github"></i><span>Follow Me</span></a><div class="card-info-social-icons is-center"><a class="social-icon" href="https://github.com/LCX666" target="_blank" title="Github"><i class="fab fa-github"></i></a><a class="social-icon" href="mailto:lucxer@qq.com" target="_blank" title="Email"><i class="fas fa-envelope"></i></a></div></div></div><div class="card-widget card-announcement"><div class="card-content"><div class="item-headline"><i class="fas fa-bullhorn card-announcement-animation"></i><span>公告</span></div><div class="announcement_content">号外！号外！号外！评论系统已开放！</div></div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="card-content"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#0x01-%E5%86%99%E5%9C%A8%E5%89%8D%E9%9D%A2"><span class="toc-number">1.</span> <span class="toc-text">0x01 写在前面</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#0x02-%E5%AE%98%E6%96%B9%E6%95%99%E7%A8%8B%E9%85%8D%E7%BD%AE%E7%8E%AF%E5%A2%83"><span class="toc-number">2.</span> <span class="toc-text">0x02 官方教程配置环境</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#2-1-%E5%8A%A0%E5%85%A5%E4%BD%93%E9%AA%8C%E8%AE%A1%E5%88%92"><span class="toc-number">2.1.</span> <span class="toc-text">2.1 加入体验计划</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#2-1-2-%E6%9B%B4%E6%96%B0%E7%B3%BB%E7%BB%9F%E7%89%88%E6%9C%AC"><span class="toc-number">2.1.1.</span> <span class="toc-text">2.1.2 更新系统版本</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-1-3-%E6%A3%80%E6%9F%A5%E7%B3%BB%E7%BB%9F%E7%89%88%E6%9C%AC"><span class="toc-number">2.1.2.</span> <span class="toc-text">2.1.3 检查系统版本</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-1-4-%E6%89%93%E5%BC%80-WSL-%E9%80%89%E9%A1%B9"><span class="toc-number">2.1.3.</span> <span class="toc-text">2.1.4 打开 WSL 选项</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#2-1-4-1-%E5%91%BD%E4%BB%A4%E8%A1%8C%E6%89%93%E5%BC%80-WSL"><span class="toc-number">2.1.3.1.</span> <span class="toc-text">2.1.4.1 命令行打开 WSL</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2-1-4-2-%E6%A3%80%E6%9F%A5%E5%90%AF%E5%8A%A8%E6%98%AF%E5%90%A6%E6%88%90%E5%8A%9F"><span class="toc-number">2.1.3.2.</span> <span class="toc-text">2.1.4.2 检查启动是否成功</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-1-5-%E4%B8%8B%E8%BD%BD-msi-%E5%AE%89%E8%A3%85%E5%8C%85"><span class="toc-number">2.1.4.</span> <span class="toc-text">2.1.5 下载 msi 安装包</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-1-6-%E8%AE%BE%E7%BD%AE%E9%BB%98%E8%AE%A4-WSL2"><span class="toc-number">2.1.5.</span> <span class="toc-text">2.1.6 设置默认 WSL2</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-2-lxrunoffline-%E5%B7%A5%E5%85%B7%E5%AE%89%E8%A3%85"><span class="toc-number">2.2.</span> <span class="toc-text">2.2 lxrunoffline  工具安装</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#2-2-1-lxrunoffline-%E7%AE%80%E4%BB%8B"><span class="toc-number">2.2.1.</span> <span class="toc-text">2.2.1 lxrunoffline  简介</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-2-2-lxrunoffline-%E7%9A%84%E5%AE%89%E8%A3%85"><span class="toc-number">2.2.2.</span> <span class="toc-text">2.2.2 lxrunoffline 的安装</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#2-2-2-1-%E4%B8%8B%E8%BD%BD-lxrunoffline"><span class="toc-number">2.2.2.1.</span> <span class="toc-text">2.2.2.1 下载 lxrunoffline</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2-2-2-2-lxrunoffline-%E5%91%BD%E4%BB%A4%E4%BB%8B%E7%BB%8D"><span class="toc-number">2.2.2.2.</span> <span class="toc-text">2.2.2.2 lxrunoffline 命令介绍</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-3-%E5%8F%91%E8%A1%8C%E7%89%88%E7%9A%84%E5%AE%89%E8%A3%85"><span class="toc-number">2.3.</span> <span class="toc-text">2.3  发行版的安装</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#2-3-1-distros-%E4%B8%8B%E8%BD%BD"><span class="toc-number">2.3.1.</span> <span class="toc-text">2.3.1 distros 下载</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-3-2-%E8%A7%A3%E5%8E%8B%E5%AE%89%E8%A3%85"><span class="toc-number">2.3.2.</span> <span class="toc-text">2.3.2 解压安装</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-3-3-%E8%AE%BE%E7%BD%AE%E7%94%A8%E6%88%B7"><span class="toc-number">2.3.3.</span> <span class="toc-text">2.3.3 设置用户</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#2-3-3-1-%E8%AE%BE%E7%BD%AE-root-%E4%B8%BA%E9%BB%98%E8%AE%A4%E7%94%A8%E6%88%B7"><span class="toc-number">2.3.3.1.</span> <span class="toc-text">2.3.3.1 设置 root 为默认用户</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2-3-3-2-%E8%AE%BE%E7%BD%AE%E6%99%AE%E9%80%9A%E7%94%A8%E6%88%B7%E4%B8%BA%E9%BB%98%E8%AE%A4%E7%94%A8%E6%88%B7"><span class="toc-number">2.3.3.2.</span> <span class="toc-text">2.3.3.2 设置普通用户为默认用户</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-4-%E8%BF%9B%E5%85%A5%E9%AA%8C%E8%AF%81"><span class="toc-number">2.4.</span> <span class="toc-text">2.4 进入验证</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-5-%E4%BF%AE%E6%94%B9%E9%85%8D%E8%89%B2"><span class="toc-number">2.5.</span> <span class="toc-text">2.5 修改配色</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-6-%E6%A1%8C%E9%9D%A2%E5%AE%89%E8%A3%85"><span class="toc-number">2.6.</span> <span class="toc-text">2.6 桌面安装</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#0x03-%E9%81%87%E5%88%B0%E7%9A%84%E5%9D%91"><span class="toc-number">3.</span> <span class="toc-text">0x03 遇到的坑</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#0x04-%E6%80%BB%E7%BB%93"><span class="toc-number">4.</span> <span class="toc-text">0x04 总结</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#0x05-%E5%8F%82%E8%80%83"><span class="toc-number">5.</span> <span class="toc-text">0x05 参考</span></a></li></ol></div></div></div><div class="card-widget card-recent-post"><div class="card-content"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/2021/10/05/31.%E4%B8%A4%E4%B8%AA%E5%AF%86%E7%A0%81%E9%A2%98/" title="两个有意思的题"><img data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/practice_3_crypto.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="两个有意思的题"/></a><div class="content"><a class="title" href="/2021/10/05/31.%E4%B8%A4%E4%B8%AA%E5%AF%86%E7%A0%81%E9%A2%98/" title="两个有意思的题">两个有意思的题</a><time datetime="2021-10-05T04:15:06.000Z" title="发表于 2021-10-05 12:15:06">2021-10-05</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2021/09/25/30.RSA-%E7%9B%B8%E5%85%B3%E6%B6%88%E6%81%AF%E6%94%BB%E5%87%BB/" title="RSA-9 Coppersmith 相关攻击"><img data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/RSA-9.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="RSA-9 Coppersmith 相关攻击"/></a><div class="content"><a class="title" href="/2021/09/25/30.RSA-%E7%9B%B8%E5%85%B3%E6%B6%88%E6%81%AF%E6%94%BB%E5%87%BB/" title="RSA-9 Coppersmith 相关攻击">RSA-9 Coppersmith 相关攻击</a><time datetime="2021-09-25T05:25:46.000Z" title="发表于 2021-09-25 13:25:46">2021-09-25</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2021/09/15/29.RSA-%E4%BD%8E%E5%8A%A0%E5%AF%86%E6%8C%87%E6%95%B0(%E5%B9%BF%E6%92%AD)%E6%94%BB%E5%87%BB/" title="RSA-8 低加密指数广播攻击"><img data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/RSA-8.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="RSA-8 低加密指数广播攻击"/></a><div class="content"><a class="title" href="/2021/09/15/29.RSA-%E4%BD%8E%E5%8A%A0%E5%AF%86%E6%8C%87%E6%95%B0(%E5%B9%BF%E6%92%AD)%E6%94%BB%E5%87%BB/" title="RSA-8 低加密指数广播攻击">RSA-8 低加密指数广播攻击</a><time datetime="2021-09-15T15:13:10.000Z" title="发表于 2021-09-15 23:13:10">2021-09-15</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2021/09/11/28.RSA-%E4%BD%8E%E8%A7%A3%E5%AF%86%E6%8C%87%E6%95%B0%E6%94%BB%E5%87%BB/" title="RSA-7 低解密指数攻击"><img data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/RSA-7.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="RSA-7 低解密指数攻击"/></a><div class="content"><a class="title" href="/2021/09/11/28.RSA-%E4%BD%8E%E8%A7%A3%E5%AF%86%E6%8C%87%E6%95%B0%E6%94%BB%E5%87%BB/" title="RSA-7 低解密指数攻击">RSA-7 低解密指数攻击</a><time datetime="2021-09-11T05:23:15.000Z" title="发表于 2021-09-11 13:23:15">2021-09-11</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2021/09/04/27.RSA-%E5%85%B1%E6%A8%A1%E6%94%BB%E5%87%BB/" title="RSA-6 共模攻击"><img data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/RSA-6.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="RSA-6 共模攻击"/></a><div class="content"><a class="title" href="/2021/09/04/27.RSA-%E5%85%B1%E6%A8%A1%E6%94%BB%E5%87%BB/" title="RSA-6 共模攻击">RSA-6 共模攻击</a><time datetime="2021-09-04T08:17:54.000Z" title="发表于 2021-09-04 16:17:54">2021-09-04</time></div></div></div></div></div></div></div></main><footer id="footer"><div id="footer-wrap"><div class="copyright">&copy;2020 - 2024 By Ron</div><div class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly</a></div><div class="footer_custom_text">Hi, welcome to my <a target="_blank" rel="noopener" href="https://lucxer.tech/">blog</a>!</div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="font-plus" type="button" title="放大字体"><i class="fas fa-plus"></i></button><button id="font-minus" type="button" title="缩小字体"><i class="fas fa-minus"></i></button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside_config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="直达评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><i class="fas fa-arrow-up"></i></button></div></div><div id="algolia-search"><div class="search-dialog"><div class="search-dialog__title" id="algolia-search-title">Algolia</div><div id="algolia-input-panel"><div id="algolia-search-input"></div></div><hr/><div id="algolia-search-results"><div id="algolia-hits"></div><div id="algolia-pagination"></div><div id="algolia-stats"></div></div><span class="search-close-button"><i class="fas fa-times"></i></span></div><div id="search-mask"></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page/instantpage.min.js" type="module"></script><script src="https://cdn.jsdelivr.net/npm/vanilla-lazyload/dist/lazyload.iife.min.js"></script><script src="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.js"></script><script>function panguFn () {
+  if (typeof pangu === 'object') pangu.spacingElementById('content-inner')
+  else {
+    getScript('https://cdn.jsdelivr.net/npm/pangu/dist/browser/pangu.min.js')
+      .then(() => {
+        pangu.spacingElementById('content-inner')
+      })
+  }
+}
+
+function panguInit () {
+  if (false){
+    GLOBAL_CONFIG_SITE.isPost && panguFn()
+  } else {
+    panguFn()
+  }
+}
+
+document.addEventListener('DOMContentLoaded', panguInit)</script><script src="/js/search/algolia.js"></script><script>var preloader = {
+  endLoading: () => {
+    document.body.style.overflow = 'auto';
+    document.getElementById('loading-box').classList.add("loaded")
+  },
+  initLoading: () => {
+    document.body.style.overflow = '';
+    document.getElementById('loading-box').classList.remove("loaded")
+
+  }
+}
+window.addEventListener('load',()=> {preloader.endLoading()})</script><div class="js-pjax"><script>if (!window.MathJax) {
+  window.MathJax = {
+    loader: {
+      source: {
+        '[tex]/amsCd': '[tex]/amscd'
+      }
+    },
+    tex: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"]],
+      tags: 'ams'
+    },
+    options: {
+      renderActions: {
+        findScript: [10, doc => {
+          for (const node of document.querySelectorAll('script[type^="math/tex"]')) {
+            const display = !!node.type.match(/; *mode=display/)
+            const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display)
+            const text = document.createTextNode('')
+            node.parentNode.replaceChild(text, node)
+            math.start = {node: text, delim: '', n: 0}
+            math.end = {node: text, delim: '', n: 0}
+            doc.math.push(math)
+          }
+        }, ''],
+        addClass: [200,() => {
+          document.querySelectorAll('mjx-container:not([display=\'true\']').forEach( node => {
+            const target = node.parentNode
+            if (!target.classList.contains('has-jax')) {
+              target.classList.add('mathjax-overflow')
+            }
+          })
+        }, '', false]
+      }
+    }
+  }
+  
+  const script = document.createElement('script')
+  script.src = 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js'
+  script.id = 'MathJax-script'
+  script.async = true
+  document.head.appendChild(script)
+} else {
+  MathJax.startup.document.state(0)
+  MathJax.texReset()
+  MathJax.typeset()
+}</script><script>function loadValine () {
+  function initValine () {
+    let initData = {
+      el: '#vcomment',
+      appId: 'bXVyoSRa1rEnCAScfAPp2a6J-MdYXbMMI',
+      appKey: 'MPmhrDo6YIbw4Ostjj3Dl18c',
+      placeholder: 'Please leave your footprints',
+      avatar: 'monsterid',
+      meta: 'nick,mail,link'.split(','),
+      pageSize: '10',
+      lang: 'en',
+      recordIP: false,
+      serverURLs: '',
+      emojiCDN: '',
+      emojiMaps: "",
+      enableQQ: false,
+      path: window.location.pathname,
+    }
+
+    if (true) { 
+      initData.requiredFields= ('nick,mail'.split(','))
+    }
+    
+    if (false) {
+      const otherData = false
+      initData = Object.assign({}, initData, otherData)
+    }
+    
+    const valine = new Valine(initData)
+  }
+
+  if (typeof Valine === 'function') initValine() 
+  else getScript('https://cdn.jsdelivr.net/npm/valine/dist/Valine.min.js').then(initValine)
+}
+
+if ('Valine' === 'Valine' || !true) {
+  if (true) btf.loadComment(document.querySelector('#vcomment'),loadValine)
+  else setTimeout(loadValine, 0)
+} else {
+  function loadOtherComment () {
+    loadValine()
+  }
+}</script><script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div><canvas class="fireworks" mobile="false"></canvas><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1/dist/fireworks.min.js"></script><script defer="defer" id="ribbon" src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1/dist/canvas-ribbon.min.js" size="150" alpha="0.6" zIndex="-1" mobile="false" data-click="false"></script><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1/dist/activate-power-mode.min.js"></script><script>POWERMODE.colorful = true;
+POWERMODE.shake = true;
+POWERMODE.mobile = false;
+document.body.addEventListener('input', POWERMODE);
+</script><script src="https://cdn.jsdelivr.net/npm/pjax/pjax.min.js"></script><script>let pjaxSelectors = [
+  'title',
+  '#config_change',
+  '#body-wrap',
+  '#rightside-config-hide',
+  '#rightside-config-show',
+  '.js-pjax'
+]
+
+if (false) {
+  pjaxSelectors.unshift('meta[property="og:image"]', 'meta[property="og:title"]', 'meta[property="og:url"]')
+}
+
+var pjax = new Pjax({
+  elements: 'a:not([target="_blank"])',
+  selectors: pjaxSelectors,
+  cacheBust: false,
+  analytics: false,
+  scrollRestoration: false
+})
+
+document.addEventListener('pjax:complete', function () {
+  window.refreshFn()
+
+  document.querySelectorAll('script[data-pjax]').forEach(item => {
+    const newScript = document.createElement('script')
+    const content = item.text || item.textContent || item.innerHTML || ""
+    Array.from(item.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value))
+    newScript.appendChild(document.createTextNode(content))
+    item.parentNode.replaceChild(newScript, item)
+  })
+
+  GLOBAL_CONFIG.islazyload && window.lazyLoadInstance.update()
+
+  typeof chatBtnFn === 'function' && chatBtnFn()
+  typeof panguInit === 'function' && panguInit()
+
+  if (typeof gtag === 'function') {
+    gtag('config', '', {'page_path': window.location.pathname});
+  }
+
+  typeof loadMeting === 'function' && document.getElementsByClassName('aplayer').length && loadMeting()
+
+  // Analytics
+  if (false) {
+    MtaH5.pgv()
+  }
+
+  // prismjs
+  typeof Prism === 'object' && Prism.highlightAll()
+
+  typeof preloader === 'object' && preloader.endLoading()
+})
+
+
+document.addEventListener('pjax:send', function () {
+  typeof preloader === 'object' && preloader.initLoading()
+  
+  if (window.aplayers) {
+    for (let i = 0; i < window.aplayers.length; i++) {
+      if (!window.aplayers[i].options.fixed) {
+        window.aplayers[i].destroy()
+      }
+    }
+  }
+
+  typeof typed === 'object' && typed.destroy()
+
+  //reset readmode
+  const $bodyClassList = document.body.classList
+  $bodyClassList.contains('read-mode') && $bodyClassList.remove('read-mode')
+
+})</script><script>(function(){
+  const bp = document.createElement('script');
+  const curProtocol = window.location.protocol.split(':')[0];
+  if (curProtocol === 'https') {
+    bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+  }
+  else{
+    bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+  }
+  bp.dataset.pjax = ''
+  const s = document.getElementsByTagName("script")[0];
+  s.parentNode.insertBefore(bp, s);
+})()</script></div></body></html>

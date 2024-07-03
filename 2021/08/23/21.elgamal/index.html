@@ -1,0 +1,531 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Elgamal 例题 | Ron's Blog</title><meta name="keywords" content="Crypto,线性同余方程组求解,Elgamal,有限域开根"><meta name="author" content="Ron"><meta name="copyright" content="Ron"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta http-equiv="Cache-Control" content="no-transform"><meta http-equiv="Cache-Control" content="no-siteapp"><meta name="description" content="记录一道 Elgamal 例题。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Elgamal 例题">
+<meta property="og:url" content="https://qriosa.github.io/2021/08/23/21.elgamal/index.html">
+<meta property="og:site_name" content="Ron&#39;s Blog">
+<meta property="og:description" content="记录一道 Elgamal 例题。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/Crypto_Elgamal.jpg">
+<meta property="article:published_time" content="2021-08-23T03:35:42.000Z">
+<meta property="article:modified_time" content="2024-07-03T07:43:04.426Z">
+<meta property="article:author" content="Ron">
+<meta property="article:tag" content="Crypto">
+<meta property="article:tag" content="线性同余方程组求解">
+<meta property="article:tag" content="Elgamal">
+<meta property="article:tag" content="有限域开根">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/Crypto_Elgamal.jpg"><link rel="shortcut icon" href="/img/favicon.ico"><link rel="canonical" href="https://qriosa.github.io/2021/08/23/21.elgamal/"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="preconnect" href="//zz.bdstatic.com"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/instantsearch.js@2.10.5/dist/instantsearch.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/instantsearch.js@2.10.5/dist/instantsearch.min.js" defer></script><script>var GLOBAL_CONFIG = { 
+  root: '/',
+  algolia: {"appId":"YJRLD9BYXZ","apiKey":"6098438f46d523cb882b858aed7b9962","indexName":"blog","hits":{"per_page":6},"languages":{"input_placeholder":"搜索文章","hits_empty":"找不到您查询的内容：${query}","hits_stats":"找到 ${hits} 条结果，用时 ${time} 毫秒"}},
+  localSearch: undefined,
+  translate: undefined,
+  noticeOutdate: {"limitDay":365,"position":"top","messagePrev":"It has been","messageNext":"days since the last update, the content of the article may be outdated."},
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '天',
+  date_suffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"你已切换为繁体","cht_to_chs":"你已切换为简体","day_to_night":"你已切换为深色模式","night_to_day":"你已切换为浅色模式","bgLight":"#49b1f5","bgDark":"#121212","position":"bottom-left"},
+  source: {
+    jQuery: 'https://cdn.jsdelivr.net/npm/jquery@latest/dist/jquery.min.js',
+    justifiedGallery: {
+      js: 'https://cdn.jsdelivr.net/npm/justifiedGallery/dist/js/jquery.justifiedGallery.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/justifiedGallery/dist/css/justifiedGallery.min.css'
+    },
+    fancybox: {
+      js: 'https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@latest/dist/jquery.fancybox.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@latest/dist/jquery.fancybox.min.css'
+    }
+  },
+  isPhotoFigcaption: true,
+  islazyload: true,
+  isanchor: true
+};
+
+var saveToLocal = {
+  set: function setWithExpiry(key, value, ttl) {
+    const now = new Date()
+    const expiryDay = ttl * 86400000
+    const item = {
+      value: value,
+      expiry: now.getTime() + expiryDay,
+    }
+    localStorage.setItem(key, JSON.stringify(item))
+  },
+
+  get: function getWithExpiry(key) {
+    const itemStr = localStorage.getItem(key)
+
+    if (!itemStr) {
+      return undefined
+    }
+    const item = JSON.parse(itemStr)
+    const now = new Date()
+
+    if (now.getTime() > item.expiry) {
+      localStorage.removeItem(key)
+      return undefined
+    }
+    return item.value
+  }
+}
+
+// https://stackoverflow.com/questions/16839698/jquery-getscript-alternative-in-native-javascript
+const getScript = url => new Promise((resolve, reject) => {
+  const script = document.createElement('script')
+  script.src = url
+  script.async = true
+  script.onerror = reject
+  script.onload = script.onreadystatechange = function() {
+    const loadState = this.readyState
+    if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+    script.onload = script.onreadystatechange = null
+    resolve()
+  }
+  document.head.appendChild(script)
+})</script><script id="config_change">var GLOBAL_CONFIG_SITE = { 
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: true,
+  isToc: true,
+  postUpdate: '2024-07-03 15:43:04'
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(function () {  window.activateDarkMode = function () {
+    document.documentElement.setAttribute('data-theme', 'dark')
+    if (document.querySelector('meta[name="theme-color"]') !== null) {
+      document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+    }
+  }
+  window.activateLightMode = function () {
+    document.documentElement.setAttribute('data-theme', 'light')
+   if (document.querySelector('meta[name="theme-color"]') !== null) {
+      document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+    }
+  }
+  const autoChangeMode = '1'
+  const t = saveToLocal.get('theme')
+  if (autoChangeMode === '1') {
+    const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches
+    const isLightMode = window.matchMedia('(prefers-color-scheme: light)').matches
+    const isNotSpecified = window.matchMedia('(prefers-color-scheme: no-preference)').matches
+    const hasNoSupport = !isDarkMode && !isLightMode && !isNotSpecified
+    if (t === undefined) {
+      if (isLightMode) activateLightMode()
+      else if (isDarkMode) activateDarkMode()
+      else if (isNotSpecified || hasNoSupport) {
+        const now = new Date()
+        const hour = now.getHours()
+        const isNight = hour <= 6 || hour >= 18
+        isNight ? activateDarkMode() : activateLightMode()
+      }
+      window.matchMedia('(prefers-color-scheme: dark)').addListener(function (e) {
+        if (saveToLocal.get('theme') === undefined) {
+          e.matches ? activateDarkMode() : activateLightMode()
+        }
+      })
+    } else if (t === 'light') activateLightMode()
+    else activateDarkMode()
+  } else if (autoChangeMode === '2') {
+    const now = new Date()
+    const hour = now.getHours()
+    const isNight = hour <= 6 || hour >= 18
+    if (t === undefined) isNight ? activateDarkMode() : activateLightMode()
+    else if (t === 'light') activateLightMode()
+    else activateDarkMode()
+  } else {
+    if (t === 'dark') activateDarkMode()
+    else if (t === 'light') activateLightMode()
+  }const asideStatus = saveToLocal.get('aside-status')
+if (asideStatus !== undefined) {
+   if (asideStatus === 'hide') {
+     document.documentElement.classList.add('hide-aside')
+   } else {
+     document.documentElement.classList.remove('hide-aside')
+   }
+}const fontSizeVal = saveToLocal.get('global-font-size')
+if (fontSizeVal !== undefined) {
+  document.documentElement.style.setProperty('--global-font-size', fontSizeVal + 'px')
+}})()</script><meta name="generator" content="Hexo 5.3.0"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="author-avatar"><img class="avatar-img" data-lazy-src="/img/kid.jpg" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data"><div class="data-item is-center"><div class="data-item-link"><a href="/archives/"><div class="headline">文章</div><div class="length-num">31</div></a></div></div><div class="data-item is-center"><div class="data-item-link"><a href="/tags/"><div class="headline">标签</div><div class="length-num">58</div></a></div></div><div class="data-item is-center"><div class="data-item-link"><a href="/categories/"><div class="headline">分类</div><div class="length-num">6</div></a></div></div></div><hr/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 时间轴</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> 关于</span></a></div></div></div></div><div id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/Crypto_Elgamal.jpg)"><nav id="nav"><span id="blog_name"><a id="site-name" href="/">Ron's Blog</a></span><div id="menus"><div id="search-button"><a class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 时间轴</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> 关于</span></a></div></div><div id="toggle-menu"><a class="site-page"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="post-info"><h1 class="post-title">Elgamal 例题</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2021-08-23T03:35:42.000Z" title="发表于 2021-08-23 11:35:42">2021-08-23</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2024-07-03T07:43:04.426Z" title="更新于 2024-07-03 15:43:04">2024-07-03</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/CTF/">CTF</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">字数总计:</span><span class="word-count">3.3k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>15分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">阅读量:</span><span id="busuanzi_value_page_pv"></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><h1 id="例题"><a href="#例题" class="headerlink" title="例题"></a>例题</h1><h2 id="Elgamal"><a href="#Elgamal" class="headerlink" title="Elgamal"></a>Elgamal</h2><h3 id="题目描述"><a href="#题目描述" class="headerlink" title="题目描述"></a>题目描述</h3><blockquote>
+<p>题目啥也没有说，就是写了了名字 Elgamal。</p>
+</blockquote>
+<p>Elgamal.py 文件如下：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> Crypto.Util.number <span class="keyword">import</span> *</span><br><span class="line"><span class="keyword">from</span> key <span class="keyword">import</span> FLAG</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">keygen</span>(<span class="params">size</span>):</span></span><br><span class="line">    q = getPrime(<span class="number">80</span>)</span><br><span class="line">    k = getPrime(<span class="number">944</span>)   </span><br><span class="line">    <span class="keyword">while</span> <span class="literal">True</span>:</span><br><span class="line">        p = q * k + <span class="number">1</span></span><br><span class="line">        <span class="keyword">if</span> isPrime(p):</span><br><span class="line">            <span class="keyword">break</span></span><br><span class="line">        k += <span class="number">1</span></span><br><span class="line">    g = <span class="number">2</span></span><br><span class="line">    <span class="keyword">while</span> <span class="literal">True</span>:</span><br><span class="line">        <span class="keyword">if</span> <span class="built_in">pow</span>(g, q, p) == <span class="number">1</span>:</span><br><span class="line">            <span class="keyword">break</span></span><br><span class="line">        g += <span class="number">1</span></span><br><span class="line">    A = getRandomInteger(size) % q</span><br><span class="line">    B = getRandomInteger(size) % q</span><br><span class="line">    x = getRandomInteger(size) % q</span><br><span class="line">    h = <span class="built_in">pow</span>(g, x, p)</span><br><span class="line">    <span class="keyword">return</span> (g, h, A, B, p, q), (x)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">rand</span>(<span class="params">A, B, q</span>):</span></span><br><span class="line">    <span class="keyword">global</span> rand_state</span><br><span class="line">    rand_state, ret = (A * rand_state + B) % q, rand_state</span><br><span class="line">    <span class="keyword">return</span> ret</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">encrypt</span>(<span class="params">pubkey, m</span>):</span></span><br><span class="line">    g, h, A, B, p, q = pubkey</span><br><span class="line">    <span class="keyword">assert</span> <span class="number">0</span> &lt; m &lt;= p</span><br><span class="line">    r = rand(A, B, q)</span><br><span class="line">    c1 = <span class="built_in">pow</span>(g, r, p)</span><br><span class="line">    c2 = (m * <span class="built_in">pow</span>(h, r, p)) % p</span><br><span class="line">    <span class="keyword">return</span> (c1, c2)</span><br><span class="line"></span><br><span class="line">rand_state = getPrime(<span class="number">1024</span>)</span><br><span class="line">pubkey, privkey = keygen(<span class="number">1024</span>)</span><br><span class="line"></span><br><span class="line">m = bytes_to_long(FLAG)</span><br><span class="line">c1, c2 = encrypt(pubkey, m)</span><br><span class="line">c1_, c2_ = encrypt(pubkey, m)</span><br><span class="line"></span><br><span class="line">print(c1, c2)</span><br><span class="line">print(c1_, c2_)</span><br><span class="line"></span><br><span class="line">s0 = <span class="number">543263588863771657634119</span></span><br><span class="line">s1 = <span class="number">628899245716105951093835</span></span><br><span class="line">s2 = <span class="number">78708024695487418261582</span></span><br><span class="line">s3 = <span class="number">598971435111109998816796</span></span><br><span class="line">s4 = <span class="number">789474285039501272453373</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">assert</span> ( A * s0 + B ) % q == s1</span><br><span class="line"><span class="keyword">assert</span> ( A * s1 + B ) % q == s2</span><br><span class="line"><span class="keyword">assert</span> ( A * s2 + B ) % q == s3</span><br><span class="line"><span class="keyword">assert</span> ( A * s3 + B ) % q == s4</span><br><span class="line"></span><br><span class="line">p = <span class="number">65211247300401312530078141569304950676358489059623557848188896752173856845051471066071652073612337629832155846984721797768267868868902023383604553319793550396610085424563231688918357710337401138108050205457200940158475922063279384491022916790549837379548978141370347556053597178221402425212594060342213485311</span></span><br><span class="line">g = <span class="number">27642593390439430783453736408814717946185190497201679721975757020767271070510268596627490205095779429964809833535285315202625851326460572368018875381603399143376574281200028337681552876140857556460885848491160812604549770668188783258592940823128376128198726254875984002214053523752696104568469730021811399216</span></span><br><span class="line">h = <span class="number">54585833166051670245656045196940486576634589000609010947618047461787934106392112227019662788387352615714332234871251868259282522817042504587428441746855906297390193418159792477477443129333707197013251839952389651332058368911829464978546505729530760951698134101053626585254469108630886768357270544236516534904</span></span><br><span class="line"></span><br><span class="line">c1 = <span class="number">60724920570148295800083597588524297283595971970237964464679084640302395172192639331196385150232229004030419122038089044697951208850497923486467859070476427472465291810423905736825272208842988090394035980454248119048131354993356125895595138979611664707727518852984351599604226889848831071126576874892808080133</span></span><br><span class="line">c2 = <span class="number">48616294792900599931167965577794374684760165574922600262773518630884983374432147726140430372696876107933565006549344582099592376234783044818320678499613925823621554608542446585829308488452057340023780821973913517239972817669309837103043456714481646128392677624092659929248296869048674230341175765084122344264</span></span><br><span class="line">c1_ = <span class="number">42875731538109170678735196002365281622531058597803022779529275736483962610547258618168523955709341579773947887175626960699426438456382655370090748369934296474999389316334717699127421889816721511602392591677377678759026657582648354688447456509292302633971842316239774410380221303269351351929586256938787054867</span></span><br><span class="line">c2_ = <span class="number">64829024929257668640929285124747107162970460545535885047576569803424908055130477684809317765011143527867645692710091307694839524199204611328374569742391489915929451079830143261799375621377093290249652912850024319433129432676683899459510155157108727860920017105870104383111111395351496171846620163716404148070</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h3 id="知识点"><a href="#知识点" class="headerlink" title="知识点"></a>知识点</h3><p>本题的考察点有以下几个：</p>
+<ol>
+<li>如何通过线性方程组构造等式求解模数。</li>
+<li>欧拉定理的变形和利用。</li>
+<li>有限域上的开根。</li>
+</ol>
+<h4 id="构造等式求解模数"><a href="#构造等式求解模数" class="headerlink" title="构造等式求解模数"></a>构造等式求解模数</h4><p>这个就是考验基本的数学观察力，还是比较容易想到的。给出下面的方程组含有 4 个方程，3 个未知数为 $A$ ，$B$ ， $q$​​ ，所以理论上我们是可以求解的。</p>
+<script type="math/tex; mode=display">
+A \times s_0 + B \equiv s_1 \pmod q \\
+A \times s_1 + B \equiv s_2 \pmod q \\
+A \times s_2 + B \equiv s_3 \pmod q \\
+A \times s_3 + B \equiv s_4 \pmod q \\</script><p>方程组的解法一般都是消元法（代入消元、加减消元），这里加减消元一下：</p>
+<script type="math/tex; mode=display">
+A \times(s_1 - s_0) \equiv (s_2 - s_1) \pmod q \\
+A \times(s_2 - s_1) \equiv (s_3 - s_2) \pmod q \\
+A \times(s_3 - s_2) \equiv (s_4 - s_3) \pmod q \\</script><p>这个减法看着不舒服，不妨换元一下，令 $a<em>i = (s</em>{i+1} - s_i)$ 。则上述方程组可以写为：</p>
+<script type="math/tex; mode=display">
+A \times a_0 \equiv a_1 \pmod q \\
+A \times a_1 \equiv a_2 \pmod q \\
+A \times a_2 \equiv a_3 \pmod q \\</script><p>现在成功消元了 $B$ ，接下来就考虑想办法消元 $A$ 。但是这是有模的情况，未知数 $q$ 是模数，不能与普通的方程组求解一般，不好看出来怎么消元。那可以将上述的方程全部进行化解规约（由递推式到通项公式。</p>
+<script type="math/tex; mode=display">
+a_1 \equiv A \times a_0 \pmod q \\
+a_2 \equiv A \times a_1 \equiv A \times (A \times a_0) \equiv A^2 \times a_0 \pmod q \\
+...</script><p>由此可以看出，$a_2$ 和 $a_1$ 差的就是一个 $a_0$ ，所以可以试试：</p>
+<script type="math/tex; mode=display">
+a_2 \times a0 \equiv A^2 \times a_0 \times a0 \equiv (A \times a_0)^2 \equiv a_1^2 \pmod q</script><p>移项就可以得到 $0$​​ 。通过代换的方式，消掉了未知数 $A$ 。</p>
+<script type="math/tex; mode=display">
+a_2 \times a_0 - a_1 ^ 2 \equiv 0 \pmod q</script><p>等式左边全部是已知的，右边只有模数 $q$ 。上述式子的含义就是 $q | a_2 \times a_0 - a_1^2$ 。如果 $a_2 \times a_0 - a_1^2$ 是负数，则可以交换为 $a_1^2 - a_2 \times a_0$​ 交换的结果也是 $0$ 。</p>
+<p>于是就简单啦，直接将左边进行因数分解，再找到合适的位数的质因数就大概率是 $q$​ 。</p>
+<blockquote>
+<p>这里不能考虑大数分解困难，因为左边的数有很多的质因数，分解起来是很容易的。</p>
+</blockquote>
+<p>求解了 $q$ 就一瞬可以求解 $A$ 和 $B$ 了。</p>
+<h4 id="欧拉函数的变形和利用"><a href="#欧拉函数的变形和利用" class="headerlink" title="欧拉函数的变形和利用"></a>欧拉函数的变形和利用</h4><p>欧拉函数的原始形式为 $a^{\varphi(p)} \equiv 1 \pmod p, gcd(a, p) = 1$ 。</p>
+<p>现在已知条件如下：</p>
+<script type="math/tex; mode=display">
+r_1\_ \equiv (A \times r_1 + B) \pmod q \\
+p \equiv 1 \pmod q \\
+g^q \equiv 1 \pmod p \\
+h \equiv g^x \pmod p \\
+c_1 \equiv g^{r_1} \pmod p \\
+c_2 \equiv m \times h^{r_1} \pmod p \\
+c_1\_ \equiv g^{r_1\_} \pmod p \\
+c_2\_ \equiv m \times h^{r_1\_} \pmod p \\
+p > q, p\ and\ q\ both\ are\ prime.\\</script><p>符号解释：</p>
+<blockquote>
+<p>$A$ , $B$ , $p$ , $q$ , $g$ , $h$ , $c<em>1$ , $c_1\</em>$ , $c<em>2$ , $c_2\</em>$  都是题目中相关参数，意义与题中一致，其中 $p$ 和 $q$ 都是质数，这些数都是已知的。</p>
+<p>$x$ 是题中的私钥，是未知的。</p>
+<p>$r<em>1\</em>$​ 与 $r_1$​​ 为生成的随机数，只知道两者之间存在关系，但是两者都未知。</p>
+<p>$m$ 则是 flag 即是我们所要求的。</p>
+</blockquote>
+<p>求解过程：</p>
+<script type="math/tex; mode=display">
+\because r_1\_ \equiv A \times r_1 + B \pmod q \\
+\& \because c_1\_ \equiv g^{r_1\_} \pmod p \\ 
+\therefore c_1\_ \equiv g^{r_1\_} \equiv g ^ {A \times r_1 + B \pmod q} \pmod p
+
+\\
+\\
+\because g ^ q \equiv 1 \pmod p \\
+\therefore g ^ {A \times r_1 + B \pmod q} \equiv g ^ {A \times r_1 + B} \pmod p
+
+\\
+\\
+
+\therefore c_1\_ \equiv g^{r_1\_} \equiv g ^ {A \times r_1 + B} \equiv g^{A \times r_1} \times g^B \pmod p</script><script type="math/tex; mode=display">
+\because c_2\_ \equiv m \times h^{r_1\_} \pmod p\\
+\& \because h \equiv g ^ x \pmod p \\
+\therefore c_2\_ \equiv m \times (g^x)^{r_1\_} \equiv m \times (g^{r_1\_})^x \pmod p
+
+\\
+\\
+\because g^{r_1\_} \equiv g^{A \times r_1} \times g^B \pmod p \ \ \ .... see(8) \\
+\therefore c_2\_ \equiv m \times (g^{r_1\_})^x \equiv m \times (g^{A \times r_1} \times g^B)^x \\ \equiv m \times(g^{A \times r_1})^x \times(g^B)^x \\
+\equiv m \times(g^{x \times r_1})^A \times (g^x)^B \\
+\because h \equiv g^x \pmod p \\
+\equiv m \times (g ^ {x \times r_1})^A \times h^B \pmod p \\
+\\
+\because c_2 \equiv m \times h^{r_1} \equiv m \times g^{x \times r_1} \pmod p\\
+\therefore g^{x \times r_1} \equiv c_2 \times m^{-1} \pmod p \\
+\\
+\therefore c_2\_ \equiv m \times (g^{x \times r_1})^A \times h^B \\
+\equiv m \times(c_2 \times m^{-1})^A \times h^B \\
+\equiv m \times c_2^A \times m^{-A} \times h^B \\
+\equiv c_2^A \times h^B \times m^{1-A}\pmod p \\
+
+\\
+\therefore m^{A-1} \equiv c_2\_^{-1} \times h^{B} \times c_2^{A} \pmod p \\
+\therefore m \equiv \sqrt[A-1]{c_2\_^{-1} \times h^{B} \times c_2^{A}} \pmod p</script><p>可以看到推导到最后，右侧的 $c<em>2\</em>^{-1} \times h^{-B} \times c_2^{-A}$​ 和 $p$​ 都是已知的。</p>
+<h4 id="有限域上开根"><a href="#有限域上开根" class="headerlink" title="有限域上开根"></a>有限域上开根</h4><p>此时，让我们回顾一下，RSA 算法的求解原理（本质就是欧拉函数）。</p>
+<p>$(e, n)$​ 是公钥， $(d,n)$​​ 是私钥。 当拿到一个密文 $c \equiv m^e \pmod n$ 时是如何求解明文 $m$​​ 的呢？有没有感觉好像并没有开有限域的方，它也可以求解出来呀？</p>
+<script type="math/tex; mode=display">
+\because e \times d \equiv 1 \pmod {\varphi(n)} \\
+\therefore e \times d = k \times \varphi(n) + 1, k \in Z \\
+\because gcd(m, n) = 1 \\
+\therefore m^{\varphi(n)}\equiv 1 \pmod n \ ······\ Euler's\ theorem\\
+\because c = m^e \mod n \\
+\therefore c^d \equiv (m^e)^d \equiv m ^ {e \times d} \equiv m^{k \times \varphi(n) + 1} \equiv m \times ({m^{\varphi(n)}})^k \equiv m \times 1^k \equiv m \pmod n \\</script><p>那是因为求解过程中， $gcd(e,\varphi(n)) = 1$​ 所以存在 $d$​ 使得 $e \times d \equiv 1 \pmod {\varphi(n)}$​ 。</p>
+<blockquote>
+<p> 即 $e \times d + \varphi(n) \times y = 1$ 是有解的。</p>
+<p>根据裴蜀定理，上述方程有解的前提是 $gcd(e, \varphi(n))|1$ ，则  $gcd(e,\varphi(n)) = 1$</p>
+</blockquote>
+<p>而本题中 $gcd(A-1, \varphi(p)) = 7438$​​​ ，所以 $(A-1) \times x + \varphi(p) \times y = 1$​​​ 是不存在解的。</p>
+<p>但是 $(A-1) \times x + \varphi(p) \times y = gcd(A-1, \varphi(p))$​ 则是一定有解的。</p>
+<p>即我们可以找到一个 $d’$​​​ 使得 $(A-1) \times d’ + \varphi(p) \times y = gcd(A-1, \varphi(p))$​​​ 即 $(A-1) \times d’ \equiv gcd(A-1, \varphi(p)) \pmod {\varphi(p)}$。</p>
+<p>令  $d = gcd(A-1, \varphi(p)), a = \frac{A-1}{d},$ </p>
+<p>那么 $(m^{(A-1)})^{d’} \equiv m ^{(A-1) \times d’} \equiv m ^ {k \times \varphi(p) + d} \equiv (m^{\varphi(p)})^k \times m^d \equiv 1^k \times m^d \equiv m^d \pmod p$ 。​​ </p>
+<p>如此求出了 $m^d$​ ，但是就不得不进行有限域上的开根了。这里是利用的 Adleman-Manders-Miller rth Root Extraction Method paper 的方法。原理有点小复杂，反正遇到这种问题直接调用这个现成的代码就好。</p>
+<p>但是这个方法只能求出来满足条件的一个特解，而开 $n$ 次方根，理论上是有 $n$ 个的，那怎么通过一个特解来得到通解呢？。</p>
+<p>可以通过 $i^n \equiv 1 \pmod p$​来实现。即</p>
+<p>若 $x_0^n \equiv y \pmod p$ 并且 $i^n \equiv 1 \pmod p$ 则 $x_0^n \times i^n \equiv 1 \pmod p$ 则 $(x_0 \times i)^n \equiv 1 \pmod p$ 所以 $x = x_0 \times i$ 就是一组解，通过遍历所有的 $i$ 即可以找到所有的解，故 $x = x_0 \times i$ 就是通解。</p>
+<p>更简单粗暴的方法就是直接顺次枚举，一会就试出来了。</p>
+<h3 id="题目详解"><a href="#题目详解" class="headerlink" title="题目详解"></a>题目详解</h3><p>先总览一下代码：</p>
+<p><code>1~2</code> 行在导入包。</p>
+<p><code>4~34</code> 行在定义函数。</p>
+<p><code>36</code> 行生成了一个随机的 1024 bit 的质数 <code>rand_state</code> 。</p>
+<p><code>37</code> 行应该是生成了相关密钥，并传入了一个 1024 的参数，应该和密钥的位数有关。</p>
+<p><code>39</code> 行在处理我们亲爱的 flag。</p>
+<p><code>40~41</code> 行在对 <code>flag</code> 进行操作，看样子应该是在进行加密，我们应该重点关注这个地方。</p>
+<p><code>43~44</code> 行将加密后的结果打印给了我们。也就是密文我们是已知了。<strong>但是统一明文连续加密了两次，这个操作是有风险的。</strong></p>
+<p><code>46~50</code> 行定义了 4 个数字。</p>
+<p><code>52~55</code> 行给了 4 个等式。这一看就是一个数学题，再一看已知量，就知道这几个未知数 $A,B,q$​ 是可以求出来，那就不管有没有用，先求出来再说。（求法见第一个知识点。</p>
+<p><code>57~64</code> 行就是给出了相关的参数作为已知， $p, g, h, c<em>1, c_2, c_1\</em>, c<em>2\</em>$ 。</p>
+<p>现在来细细分析代码：</p>
+<p><code>keygen</code> 函数</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">keygen</span>(<span class="params">size</span>):</span></span><br><span class="line">    q = getPrime(<span class="number">80</span>)</span><br><span class="line">    k = getPrime(<span class="number">944</span>)  <span class="comment"># 生成两个质数，一大一小</span></span><br><span class="line">    <span class="keyword">while</span> <span class="literal">True</span>: <span class="comment"># 也就是说 p 是一个质数,同时 p%q=1</span></span><br><span class="line">        p = q * k + <span class="number">1</span></span><br><span class="line">        <span class="keyword">if</span> isPrime(p):</span><br><span class="line">            <span class="keyword">break</span></span><br><span class="line">        k += <span class="number">1</span></span><br><span class="line">    g = <span class="number">2</span></span><br><span class="line">    <span class="keyword">while</span> <span class="literal">True</span>: <span class="comment"># 找到一个 g 使得 pow(g,q,p) = 1</span></span><br><span class="line">        <span class="keyword">if</span> <span class="built_in">pow</span>(g, q, p) == <span class="number">1</span>:</span><br><span class="line">            <span class="keyword">break</span></span><br><span class="line">        g += <span class="number">1</span></span><br><span class="line">    A = getRandomInteger(size) % q</span><br><span class="line">    B = getRandomInteger(size) % q</span><br><span class="line">    x = getRandomInteger(size) % q <span class="comment"># 随机取了三个整数</span></span><br><span class="line">    h = <span class="built_in">pow</span>(g, x, p) <span class="comment"># 根据 elgamal 的加密方式， h 应该就是公钥，x 就是私钥了。</span></span><br><span class="line">    <span class="keyword">return</span> (g, h, A, B, p, q), (x) </span><br></pre></td></tr></table></figure>
+<p>分析完毕，除了 $p$ 同时满足关系 $p \equiv 1 \pmod q$ 外，没啥异常。</p>
+<p><code>rand</code> 函数</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">rand</span>(<span class="params">A, B, q</span>):</span></span><br><span class="line">    <span class="keyword">global</span> rand_state <span class="comment"># 36 行生成的随机数，看来是作为了种子</span></span><br><span class="line">    rand_state, ret = (A * rand_state + B) % q, rand_state <span class="comment"># 两次产生的随机数之间是有计算关系的</span></span><br><span class="line">    <span class="keyword">return</span> ret</span><br></pre></td></tr></table></figure>
+<p>分析完，发现敏感点，这样的自定义<strong>“随机”</strong>函数，多次生成的“随机数”之间是有代数关系的，<strong>即随机数之间完全不随机了，这是非常危险的。</strong></p>
+<p><code>encrypt</code> 函数</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">encrypt</span>(<span class="params">pubkey, m</span>):</span> <span class="comment"># 公钥 和 flag</span></span><br><span class="line">    g, h, A, B, p, q = pubkey</span><br><span class="line">    <span class="keyword">assert</span> <span class="number">0</span> &lt; m &lt;= p</span><br><span class="line">    r = rand(A, B, q) <span class="comment"># 生成了一个自定义随机数</span></span><br><span class="line">    c1 = <span class="built_in">pow</span>(g, r, p)</span><br><span class="line">    c2 = (m * <span class="built_in">pow</span>(h, r, p)) % p</span><br><span class="line">    <span class="keyword">return</span> (c1, c2) <span class="comment"># 返回加密结果</span></span><br></pre></td></tr></table></figure>
+<p>虽然这个加密函数才是重头戏，因为其直接与我们的 <code>flag</code> 相关。但是这个加密函数，确实没啥问题，就是 Elgamal 标准的加密方式。</p>
+<p>那可就难了，至少 Elgamal 目前的安全性还是很够的，不可能去解决离散对数问题。那问题在哪里呢？</p>
+<p>现在回顾发现的问题：</p>
+<ol>
+<li>同一明文连续加密了两次。</li>
+<li>随机数不随机了。</li>
+</ol>
+<p><strong>单独看都是有风险，放一起就是大漏洞！</strong></p>
+<p>Elgamal 的加密中，严格要求生成的随机数 <code>r</code> 不能重复使用，更不能对同一明文进行加密。而此处虽然两次加密没有使用相同的随机数 <code>r</code> 但是两次使用的随机数之间有代数关系，可以互相推导，这就有问题：可以结合两次加密的结果构建方程组进行解方程。</p>
+<p>于是，才有了前面知识点中，<strong>欧拉函数的变形利用</strong>。这就是发现这一点后，开始将所以已知量罗列出来，开始尝试着手构建方程并解方程。</p>
+<h3 id="参考代码"><a href="#参考代码" class="headerlink" title="参考代码"></a>参考代码</h3><p>有了前面的分析之后，就可以很简单地写出代码了</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> time</span><br><span class="line"><span class="keyword">import</span> random</span><br><span class="line"><span class="keyword">from</span> Crypto.Util.number <span class="keyword">import</span> long_to_bytes</span><br><span class="line"><span class="keyword">import</span> gmpy2</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">factor_to_get_q</span>(<span class="params">temp</span>):</span></span><br><span class="line">    <span class="comment"># 对 temp 进行因式分解</span></span><br><span class="line">    factors = factor(temp)</span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> factors:</span><br><span class="line">        <span class="keyword">if</span> i[<span class="number">0</span>].nbits() == <span class="number">80</span>:  <span class="comment"># 80, 刚好 80 bits</span></span><br><span class="line">            <span class="keyword">return</span> gmpy2.mpz(i[<span class="number">0</span>])</span><br><span class="line">    <span class="keyword">raise</span> Exception(<span class="string">&quot;fail to get q&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">get_A_B_q</span>():</span></span><br><span class="line">    s0 = <span class="number">543263588863771657634119</span></span><br><span class="line">    s1 = <span class="number">628899245716105951093835</span></span><br><span class="line">    s2 = <span class="number">78708024695487418261582</span></span><br><span class="line">    s3 = <span class="number">598971435111109998816796</span></span><br><span class="line">    s4 = <span class="number">789474285039501272453373</span></span><br><span class="line"></span><br><span class="line">    a0 = s1 - s0</span><br><span class="line">    a1 = s2 - s1</span><br><span class="line">    a2 = s3 - s2</span><br><span class="line"></span><br><span class="line">    temp = a1 * a1 - a2 * a0 </span><br><span class="line">    </span><br><span class="line">    q = factor_to_get_q(temp)</span><br><span class="line">    A = a1 * gmpy2.invert(a0, q) % q<span class="comment"># = gmpy2.mpz(12742153496769814072597)</span></span><br><span class="line">    B = (s1 - A * s0) % q <span class="comment"># = gmpy2.mpz(3035433788765894539799)</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> A, B, q</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">AMM</span>(<span class="params">o, r, q</span>):</span></span><br><span class="line">    <span class="string">&quot;&quot;&quot;</span></span><br><span class="line"><span class="string">    pow(x, r, q) = o --&gt; return x</span></span><br><span class="line"><span class="string">    &quot;&quot;&quot;</span></span><br><span class="line">    start = time.time()</span><br><span class="line">    <span class="comment"># print(&#x27;\n----------------------------------------------------------------------------------&#x27;)</span></span><br><span class="line">    <span class="comment"># print(&#x27;Start to run Adleman-Manders-Miller Root Extraction Method&#x27;)</span></span><br><span class="line">    <span class="comment"># print(&#x27;Try to find one &#123;:#x&#125;th root of &#123;&#125; modulo &#123;&#125;&#x27;.format(r, o, q))</span></span><br><span class="line">    g = GF(q)</span><br><span class="line">    o = g(o)</span><br><span class="line">    p = g(random.randint(<span class="number">1</span>, q))</span><br><span class="line">    <span class="keyword">while</span> p ^ ((q-<span class="number">1</span>) // r) == <span class="number">1</span>:</span><br><span class="line">        p = g(random.randint(<span class="number">1</span>, q))</span><br><span class="line">    <span class="comment"># print(&#x27;[+] Find p:&#123;&#125;&#x27;.format(p))</span></span><br><span class="line">    t = <span class="number">0</span></span><br><span class="line">    s = q - <span class="number">1</span></span><br><span class="line">    <span class="keyword">while</span> s % r == <span class="number">0</span>:</span><br><span class="line">        t += <span class="number">1</span></span><br><span class="line">        s = s // r</span><br><span class="line">    <span class="comment"># print(&#x27;[+] Find s:&#123;&#125;, t:&#123;&#125;&#x27;.format(s, t))</span></span><br><span class="line">    k = <span class="number">1</span></span><br><span class="line">    <span class="keyword">while</span> (k * s + <span class="number">1</span>) % r != <span class="number">0</span>:</span><br><span class="line">        k += <span class="number">1</span></span><br><span class="line">    alp = (k * s + <span class="number">1</span>) // r</span><br><span class="line">    <span class="comment"># print(&#x27;[+] Find alp:&#123;&#125;&#x27;.format(alp))</span></span><br><span class="line">    a = p ^ (r**(t-<span class="number">1</span>) * s)</span><br><span class="line">    b = o ^ (r*alp - <span class="number">1</span>)</span><br><span class="line">    c = p ^ s</span><br><span class="line">    h = <span class="number">1</span></span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">1</span>, t):</span><br><span class="line">        d = b ^ (r^(t-<span class="number">1</span>-i))</span><br><span class="line">        <span class="keyword">if</span> d == <span class="number">1</span>:</span><br><span class="line">            j = <span class="number">0</span></span><br><span class="line">        <span class="keyword">else</span>:</span><br><span class="line">            <span class="comment"># print(&#x27;[+] Calculating DLP...&#x27;)</span></span><br><span class="line">            j = - dicreat_log(a, d)</span><br><span class="line">            <span class="comment"># print(&#x27;[+] Finish DLP...&#x27;)</span></span><br><span class="line">        b = b * (c^r)^j</span><br><span class="line">        h = h * c^j</span><br><span class="line">        c = c ^ r</span><br><span class="line">    result = o^alp * h</span><br><span class="line">    <span class="comment"># end = time.time()</span></span><br><span class="line">    <span class="comment"># print(&quot;Finished in &#123;&#125; seconds.&quot;.format(end - start))</span></span><br><span class="line">    <span class="comment"># print(&#x27;Find one solution: &#123;&#125;&#x27;.format(result))</span></span><br><span class="line">    <span class="keyword">return</span> result</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">exgcd</span>(<span class="params">a, b</span>):</span></span><br><span class="line">    <span class="keyword">if</span> a == <span class="number">0</span>:</span><br><span class="line">        <span class="keyword">return</span> (b, <span class="number">0</span>, <span class="number">1</span>)</span><br><span class="line">    <span class="keyword">else</span>:</span><br><span class="line">        g, x, y = exgcd(b % a, a)</span><br><span class="line">        <span class="keyword">return</span> (g, y - (b // a) * x, x)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">crack</span>():</span></span><br><span class="line">    c1 = gmpy2.mpz(<span class="number">60724920570148295800083597588524297283595971970237964464679084640302395172192639331196385150232229004030419122038089044697951208850497923486467859070476427472465291810423905736825272208842988090394035980454248119048131354993356125895595138979611664707727518852984351599604226889848831071126576874892808080133</span>)</span><br><span class="line">    c2 = gmpy2.mpz(<span class="number">48616294792900599931167965577794374684760165574922600262773518630884983374432147726140430372696876107933565006549344582099592376234783044818320678499613925823621554608542446585829308488452057340023780821973913517239972817669309837103043456714481646128392677624092659929248296869048674230341175765084122344264</span>)</span><br><span class="line">    c1_ = gmpy2.mpz(<span class="number">42875731538109170678735196002365281622531058597803022779529275736483962610547258618168523955709341579773947887175626960699426438456382655370090748369934296474999389316334717699127421889816721511602392591677377678759026657582648354688447456509292302633971842316239774410380221303269351351929586256938787054867</span>)</span><br><span class="line">    c2_ = gmpy2.mpz(<span class="number">64829024929257668640929285124747107162970460545535885047576569803424908055130477684809317765011143527867645692710091307694839524199204611328374569742391489915929451079830143261799375621377093290249652912850024319433129432676683899459510155157108727860920017105870104383111111395351496171846620163716404148070</span>)</span><br><span class="line"></span><br><span class="line">    p = gmpy2.mpz(<span class="number">65211247300401312530078141569304950676358489059623557848188896752173856845051471066071652073612337629832155846984721797768267868868902023383604553319793550396610085424563231688918357710337401138108050205457200940158475922063279384491022916790549837379548978141370347556053597178221402425212594060342213485311</span>)</span><br><span class="line">    g = gmpy2.mpz(<span class="number">27642593390439430783453736408814717946185190497201679721975757020767271070510268596627490205095779429964809833535285315202625851326460572368018875381603399143376574281200028337681552876140857556460885848491160812604549770668188783258592940823128376128198726254875984002214053523752696104568469730021811399216</span>)</span><br><span class="line">    h = gmpy2.mpz(<span class="number">54585833166051670245656045196940486576634589000609010947618047461787934106392112227019662788387352615714332234871251868259282522817042504587428441746855906297390193418159792477477443129333707197013251839952389651332058368911829464978546505729530760951698134101053626585254469108630886768357270544236516534904</span>)</span><br><span class="line"></span><br><span class="line">    A, B, q = get_A_B_q()</span><br><span class="line"></span><br><span class="line">    <span class="comment"># d&#x27;</span></span><br><span class="line">    d, d1, y = exgcd(A-<span class="number">1</span>, p-<span class="number">1</span>)</span><br><span class="line">    a = (A-<span class="number">1</span>) // d</span><br><span class="line"></span><br><span class="line">    <span class="comment"># c2_^(-1)</span></span><br><span class="line">    c2__invert = gmpy2.invert(c2_, p)</span><br><span class="line"></span><br><span class="line">    m7438 = <span class="built_in">pow</span>(c2__invert * <span class="built_in">pow</span>(h, B, p) * <span class="built_in">pow</span>(c2, A, p) % p, d1, p)</span><br><span class="line"></span><br><span class="line">    x0 = AMM(m7438, d, p)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> l <span class="keyword">in</span> <span class="built_in">range</span>(d):</span><br><span class="line">        flag = long_to_bytes(<span class="built_in">pow</span>(l, p//d, p)*x0%p)</span><br><span class="line">        <span class="keyword">if</span> <span class="string">b&quot;flag&quot;</span> <span class="keyword">in</span> flag:</span><br><span class="line">            print(flag)</span><br><span class="line">            <span class="keyword">break</span></span><br><span class="line"> </span><br><span class="line">crack()</span><br></pre></td></tr></table></figure>
+<p>最后，<code>flag</code> 如下：</p>
+<blockquote>
+<p>b’flag{19e9f185e6a680324cedd6e6d9382743}’</p>
+</blockquote>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta">文章作者: </span><span class="post-copyright-info"><a href="mailto:undefined">Ron</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta">文章链接: </span><span class="post-copyright-info"><a href="https://qriosa.github.io/2021/08/23/21.elgamal/">https://qriosa.github.io/2021/08/23/21.elgamal/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta">版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来自 <a href="https://qriosa.github.io" target="_blank">Ron's Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/Crypto/">Crypto</a><a class="post-meta__tags" href="/tags/%E7%BA%BF%E6%80%A7%E5%90%8C%E4%BD%99%E6%96%B9%E7%A8%8B%E7%BB%84%E6%B1%82%E8%A7%A3/">线性同余方程组求解</a><a class="post-meta__tags" href="/tags/Elgamal/">Elgamal</a><a class="post-meta__tags" href="/tags/%E6%9C%89%E9%99%90%E5%9F%9F%E5%BC%80%E6%A0%B9/">有限域开根</a></div><div class="post_share"><div class="addthis_inline_share_toolbox"></div><script src="//s7.addthis.com/js/300/addthis_widget.js#pubid=5fb3e45d5f9ff11c" async="async"></script></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i> 打赏<div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="/img/wechat.png" target="_blank"><img class="post-qr-code-img" data-lazy-src="/img/wechat.png" alt="wechat"/></a><div class="post-qr-code-desc">wechat</div></li><li class="reward-item"><a href="/img/alipay.png" target="_blank"><img class="post-qr-code-img" data-lazy-src="/img/alipay.png" alt="alipay"/></a><div class="post-qr-code-desc">alipay</div></li></ul></div></div></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/2021/08/25/24.RSA-n%E5%A4%9A%E8%B4%A8%E5%9B%A0%E6%95%B0%E6%94%BB%E5%87%BB/"><img class="prev-cover" data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/RSA-3.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="pagination-info"><div class="label">上一篇</div><div class="prev_info">RSA-3 模数 n 多质因数攻击</div></div></a></div><div class="next-post pull-right"><a href="/2021/08/22/23.RSA-%E5%9B%A0%E5%AD%90%E5%B7%AE%E5%BC%82%E8%BF%87%E5%A4%A7%E6%88%96%E8%BF%87%E5%B0%8F/"><img class="next-cover" data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/RSA-2.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">RSA-2 因子差异过大或过小</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span> 相关推荐</span></div><div class="relatedPosts-list"><div><a href="/2021/08/22/23.RSA-因子差异过大或过小/" title="RSA-2 因子差异过大或过小"><img class="cover" data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/RSA-2.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2021-08-22</div><div class="title">RSA-2 因子差异过大或过小</div></div></a></div><div><a href="/2021/08/20/22.RSA-直接分解/" title="RSA-1 直接分解模数"><img class="cover" data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/RSA-1.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2021-08-20</div><div class="title">RSA-1 直接分解模数</div></div></a></div><div><a href="/2021/08/25/24.RSA-n多质因数攻击/" title="RSA-3 模数 n 多质因数攻击"><img class="cover" data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/RSA-3.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2021-08-25</div><div class="title">RSA-3 模数 n 多质因数攻击</div></div></a></div><div><a href="/2021/08/29/25.RSA-e和φ(n)不互质/" title="RSA-4 e 和 ɸ(n) 不互质"><img class="cover" data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/RSA-4.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2021-08-29</div><div class="title">RSA-4 e 和 ɸ(n) 不互质</div></div></a></div><div><a href="/2021/09/01/26.RSA-公因子唯密文攻击/" title="RSA-5 公因子唯密文攻击"><img class="cover" data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/RSA-5.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2021-09-01</div><div class="title">RSA-5 公因子唯密文攻击</div></div></a></div><div><a href="/2021/09/04/27.RSA-共模攻击/" title="RSA-6 共模攻击"><img class="cover" data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/RSA-6.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2021-09-04</div><div class="title">RSA-6 共模攻击</div></div></a></div></div></div><hr/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div class="vcomment" id="vcomment"></div></div></div></div></div><div class="aside_content" id="aside_content"><div class="card-widget card-info"><div class="card-content"><div class="card-info-avatar is-center"><img class="avatar-img" data-lazy-src="/img/kid.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/><div class="author-info__name">Ron</div><div class="author-info__description">retired OIer, Novice CTF Enthusiast</div></div><div class="card-info-data"><div class="card-info-data-item is-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">31</div></a></div><div class="card-info-data-item is-center"><a href="/tags/"><div class="headline">标签</div><div class="length-num">58</div></a></div><div class="card-info-data-item is-center"><a href="/categories/"><div class="headline">分类</div><div class="length-num">6</div></a></div></div><a class="button--animated" id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/LCX666"><i class="fab fa-github"></i><span>Follow Me</span></a><div class="card-info-social-icons is-center"><a class="social-icon" href="https://github.com/LCX666" target="_blank" title="Github"><i class="fab fa-github"></i></a><a class="social-icon" href="mailto:lucxer@qq.com" target="_blank" title="Email"><i class="fas fa-envelope"></i></a></div></div></div><div class="card-widget card-announcement"><div class="card-content"><div class="item-headline"><i class="fas fa-bullhorn card-announcement-animation"></i><span>公告</span></div><div class="announcement_content">号外！号外！号外！评论系统已开放！</div></div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="card-content"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%BE%8B%E9%A2%98"><span class="toc-number">1.</span> <span class="toc-text">例题</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Elgamal"><span class="toc-number">1.1.</span> <span class="toc-text">Elgamal</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%A2%98%E7%9B%AE%E6%8F%8F%E8%BF%B0"><span class="toc-number">1.1.1.</span> <span class="toc-text">题目描述</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%9F%A5%E8%AF%86%E7%82%B9"><span class="toc-number">1.1.2.</span> <span class="toc-text">知识点</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%9E%84%E9%80%A0%E7%AD%89%E5%BC%8F%E6%B1%82%E8%A7%A3%E6%A8%A1%E6%95%B0"><span class="toc-number">1.1.2.1.</span> <span class="toc-text">构造等式求解模数</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%AC%A7%E6%8B%89%E5%87%BD%E6%95%B0%E7%9A%84%E5%8F%98%E5%BD%A2%E5%92%8C%E5%88%A9%E7%94%A8"><span class="toc-number">1.1.2.2.</span> <span class="toc-text">欧拉函数的变形和利用</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%9C%89%E9%99%90%E5%9F%9F%E4%B8%8A%E5%BC%80%E6%A0%B9"><span class="toc-number">1.1.2.3.</span> <span class="toc-text">有限域上开根</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%A2%98%E7%9B%AE%E8%AF%A6%E8%A7%A3"><span class="toc-number">1.1.3.</span> <span class="toc-text">题目详解</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E4%BB%A3%E7%A0%81"><span class="toc-number">1.1.4.</span> <span class="toc-text">参考代码</span></a></li></ol></li></ol></li></ol></div></div></div><div class="card-widget card-recent-post"><div class="card-content"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/2021/10/05/31.%E4%B8%A4%E4%B8%AA%E5%AF%86%E7%A0%81%E9%A2%98/" title="两个有意思的题"><img data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/practice_3_crypto.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="两个有意思的题"/></a><div class="content"><a class="title" href="/2021/10/05/31.%E4%B8%A4%E4%B8%AA%E5%AF%86%E7%A0%81%E9%A2%98/" title="两个有意思的题">两个有意思的题</a><time datetime="2021-10-05T04:15:06.000Z" title="发表于 2021-10-05 12:15:06">2021-10-05</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2021/09/25/30.RSA-%E7%9B%B8%E5%85%B3%E6%B6%88%E6%81%AF%E6%94%BB%E5%87%BB/" title="RSA-9 Coppersmith 相关攻击"><img data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/RSA-9.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="RSA-9 Coppersmith 相关攻击"/></a><div class="content"><a class="title" href="/2021/09/25/30.RSA-%E7%9B%B8%E5%85%B3%E6%B6%88%E6%81%AF%E6%94%BB%E5%87%BB/" title="RSA-9 Coppersmith 相关攻击">RSA-9 Coppersmith 相关攻击</a><time datetime="2021-09-25T05:25:46.000Z" title="发表于 2021-09-25 13:25:46">2021-09-25</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2021/09/15/29.RSA-%E4%BD%8E%E5%8A%A0%E5%AF%86%E6%8C%87%E6%95%B0(%E5%B9%BF%E6%92%AD)%E6%94%BB%E5%87%BB/" title="RSA-8 低加密指数广播攻击"><img data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/RSA-8.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="RSA-8 低加密指数广播攻击"/></a><div class="content"><a class="title" href="/2021/09/15/29.RSA-%E4%BD%8E%E5%8A%A0%E5%AF%86%E6%8C%87%E6%95%B0(%E5%B9%BF%E6%92%AD)%E6%94%BB%E5%87%BB/" title="RSA-8 低加密指数广播攻击">RSA-8 低加密指数广播攻击</a><time datetime="2021-09-15T15:13:10.000Z" title="发表于 2021-09-15 23:13:10">2021-09-15</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2021/09/11/28.RSA-%E4%BD%8E%E8%A7%A3%E5%AF%86%E6%8C%87%E6%95%B0%E6%94%BB%E5%87%BB/" title="RSA-7 低解密指数攻击"><img data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/RSA-7.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="RSA-7 低解密指数攻击"/></a><div class="content"><a class="title" href="/2021/09/11/28.RSA-%E4%BD%8E%E8%A7%A3%E5%AF%86%E6%8C%87%E6%95%B0%E6%94%BB%E5%87%BB/" title="RSA-7 低解密指数攻击">RSA-7 低解密指数攻击</a><time datetime="2021-09-11T05:23:15.000Z" title="发表于 2021-09-11 13:23:15">2021-09-11</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2021/09/04/27.RSA-%E5%85%B1%E6%A8%A1%E6%94%BB%E5%87%BB/" title="RSA-6 共模攻击"><img data-lazy-src="https://cdn.jsdelivr.net/gh/qriosa/picgo-blog/img/RSA-6.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="RSA-6 共模攻击"/></a><div class="content"><a class="title" href="/2021/09/04/27.RSA-%E5%85%B1%E6%A8%A1%E6%94%BB%E5%87%BB/" title="RSA-6 共模攻击">RSA-6 共模攻击</a><time datetime="2021-09-04T08:17:54.000Z" title="发表于 2021-09-04 16:17:54">2021-09-04</time></div></div></div></div></div></div></div></main><footer id="footer"><div id="footer-wrap"><div class="copyright">&copy;2020 - 2024 By Ron</div><div class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly</a></div><div class="footer_custom_text">Hi, welcome to my <a target="_blank" rel="noopener" href="https://lucxer.tech/">blog</a>!</div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="font-plus" type="button" title="放大字体"><i class="fas fa-plus"></i></button><button id="font-minus" type="button" title="缩小字体"><i class="fas fa-minus"></i></button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside_config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="直达评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><i class="fas fa-arrow-up"></i></button></div></div><div id="algolia-search"><div class="search-dialog"><div class="search-dialog__title" id="algolia-search-title">Algolia</div><div id="algolia-input-panel"><div id="algolia-search-input"></div></div><hr/><div id="algolia-search-results"><div id="algolia-hits"></div><div id="algolia-pagination"></div><div id="algolia-stats"></div></div><span class="search-close-button"><i class="fas fa-times"></i></span></div><div id="search-mask"></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page/instantpage.min.js" type="module"></script><script src="https://cdn.jsdelivr.net/npm/vanilla-lazyload/dist/lazyload.iife.min.js"></script><script src="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.js"></script><script>function panguFn () {
+  if (typeof pangu === 'object') pangu.spacingElementById('content-inner')
+  else {
+    getScript('https://cdn.jsdelivr.net/npm/pangu/dist/browser/pangu.min.js')
+      .then(() => {
+        pangu.spacingElementById('content-inner')
+      })
+  }
+}
+
+function panguInit () {
+  if (false){
+    GLOBAL_CONFIG_SITE.isPost && panguFn()
+  } else {
+    panguFn()
+  }
+}
+
+document.addEventListener('DOMContentLoaded', panguInit)</script><script src="/js/search/algolia.js"></script><script>var preloader = {
+  endLoading: () => {
+    document.body.style.overflow = 'auto';
+    document.getElementById('loading-box').classList.add("loaded")
+  },
+  initLoading: () => {
+    document.body.style.overflow = '';
+    document.getElementById('loading-box').classList.remove("loaded")
+
+  }
+}
+window.addEventListener('load',()=> {preloader.endLoading()})</script><div class="js-pjax"><script>if (!window.MathJax) {
+  window.MathJax = {
+    loader: {
+      source: {
+        '[tex]/amsCd': '[tex]/amscd'
+      }
+    },
+    tex: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"]],
+      tags: 'ams'
+    },
+    options: {
+      renderActions: {
+        findScript: [10, doc => {
+          for (const node of document.querySelectorAll('script[type^="math/tex"]')) {
+            const display = !!node.type.match(/; *mode=display/)
+            const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display)
+            const text = document.createTextNode('')
+            node.parentNode.replaceChild(text, node)
+            math.start = {node: text, delim: '', n: 0}
+            math.end = {node: text, delim: '', n: 0}
+            doc.math.push(math)
+          }
+        }, ''],
+        addClass: [200,() => {
+          document.querySelectorAll('mjx-container:not([display=\'true\']').forEach( node => {
+            const target = node.parentNode
+            if (!target.classList.contains('has-jax')) {
+              target.classList.add('mathjax-overflow')
+            }
+          })
+        }, '', false]
+      }
+    }
+  }
+  
+  const script = document.createElement('script')
+  script.src = 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js'
+  script.id = 'MathJax-script'
+  script.async = true
+  document.head.appendChild(script)
+} else {
+  MathJax.startup.document.state(0)
+  MathJax.texReset()
+  MathJax.typeset()
+}</script><script>function loadValine () {
+  function initValine () {
+    let initData = {
+      el: '#vcomment',
+      appId: 'bXVyoSRa1rEnCAScfAPp2a6J-MdYXbMMI',
+      appKey: 'MPmhrDo6YIbw4Ostjj3Dl18c',
+      placeholder: 'Please leave your footprints',
+      avatar: 'monsterid',
+      meta: 'nick,mail,link'.split(','),
+      pageSize: '10',
+      lang: 'en',
+      recordIP: false,
+      serverURLs: '',
+      emojiCDN: '',
+      emojiMaps: "",
+      enableQQ: false,
+      path: window.location.pathname,
+    }
+
+    if (true) { 
+      initData.requiredFields= ('nick,mail'.split(','))
+    }
+    
+    if (false) {
+      const otherData = false
+      initData = Object.assign({}, initData, otherData)
+    }
+    
+    const valine = new Valine(initData)
+  }
+
+  if (typeof Valine === 'function') initValine() 
+  else getScript('https://cdn.jsdelivr.net/npm/valine/dist/Valine.min.js').then(initValine)
+}
+
+if ('Valine' === 'Valine' || !true) {
+  if (true) btf.loadComment(document.querySelector('#vcomment'),loadValine)
+  else setTimeout(loadValine, 0)
+} else {
+  function loadOtherComment () {
+    loadValine()
+  }
+}</script><script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div><canvas class="fireworks" mobile="false"></canvas><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1/dist/fireworks.min.js"></script><script defer="defer" id="ribbon" src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1/dist/canvas-ribbon.min.js" size="150" alpha="0.6" zIndex="-1" mobile="false" data-click="false"></script><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1/dist/activate-power-mode.min.js"></script><script>POWERMODE.colorful = true;
+POWERMODE.shake = true;
+POWERMODE.mobile = false;
+document.body.addEventListener('input', POWERMODE);
+</script><script src="https://cdn.jsdelivr.net/npm/pjax/pjax.min.js"></script><script>let pjaxSelectors = [
+  'title',
+  '#config_change',
+  '#body-wrap',
+  '#rightside-config-hide',
+  '#rightside-config-show',
+  '.js-pjax'
+]
+
+if (false) {
+  pjaxSelectors.unshift('meta[property="og:image"]', 'meta[property="og:title"]', 'meta[property="og:url"]')
+}
+
+var pjax = new Pjax({
+  elements: 'a:not([target="_blank"])',
+  selectors: pjaxSelectors,
+  cacheBust: false,
+  analytics: false,
+  scrollRestoration: false
+})
+
+document.addEventListener('pjax:complete', function () {
+  window.refreshFn()
+
+  document.querySelectorAll('script[data-pjax]').forEach(item => {
+    const newScript = document.createElement('script')
+    const content = item.text || item.textContent || item.innerHTML || ""
+    Array.from(item.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value))
+    newScript.appendChild(document.createTextNode(content))
+    item.parentNode.replaceChild(newScript, item)
+  })
+
+  GLOBAL_CONFIG.islazyload && window.lazyLoadInstance.update()
+
+  typeof chatBtnFn === 'function' && chatBtnFn()
+  typeof panguInit === 'function' && panguInit()
+
+  if (typeof gtag === 'function') {
+    gtag('config', '', {'page_path': window.location.pathname});
+  }
+
+  typeof loadMeting === 'function' && document.getElementsByClassName('aplayer').length && loadMeting()
+
+  // Analytics
+  if (false) {
+    MtaH5.pgv()
+  }
+
+  // prismjs
+  typeof Prism === 'object' && Prism.highlightAll()
+
+  typeof preloader === 'object' && preloader.endLoading()
+})
+
+
+document.addEventListener('pjax:send', function () {
+  typeof preloader === 'object' && preloader.initLoading()
+  
+  if (window.aplayers) {
+    for (let i = 0; i < window.aplayers.length; i++) {
+      if (!window.aplayers[i].options.fixed) {
+        window.aplayers[i].destroy()
+      }
+    }
+  }
+
+  typeof typed === 'object' && typed.destroy()
+
+  //reset readmode
+  const $bodyClassList = document.body.classList
+  $bodyClassList.contains('read-mode') && $bodyClassList.remove('read-mode')
+
+})</script><script>(function(){
+  const bp = document.createElement('script');
+  const curProtocol = window.location.protocol.split(':')[0];
+  if (curProtocol === 'https') {
+    bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+  }
+  else{
+    bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+  }
+  bp.dataset.pjax = ''
+  const s = document.getElementsByTagName("script")[0];
+  s.parentNode.insertBefore(bp, s);
+})()</script></div></body></html>
